@@ -127,6 +127,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/favorite',
+    name: 'Favorite',
+    component: () => import('@/views/Favorite.vue'),
+    meta: {
+      title: '我喜欢的音乐',
+      keepAlive: false,
+    },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),

@@ -33,7 +33,10 @@
     />
     
     <!-- 设置组件 -->
-    <Settings v-model:show="showSettings" />
+    <Settings v-model:show="showSettings" @close="showSettings = false" />
+    
+    <!-- 确认对话框组件 -->
+    <Confirm />
   </div>
 </template>
 
@@ -51,6 +54,7 @@ import Player from '@/components/PlayCard.vue'
 import Toast from '@/components/Toast.vue'
 import Action from '@/components/Action.vue'
 import Settings from '@/components/Settings.vue'
+import Confirm from '@/components/Confirm.vue'
 import Text from './components/Text.vue'
 import { hideText, textStore } from './stores/text'
 

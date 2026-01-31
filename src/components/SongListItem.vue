@@ -81,7 +81,7 @@ const emit = defineEmits<{
 }>()
 
 const isVip = computed(() => props.song.fee === 1)
-const canPlay = computed(() => (props.song.privilege?.pl && props.song.privilege?.pl > 0) || props.song.fee !== 1)
+const canPlay = computed(() => (props.song.privilege?.pl && props.song.privilege?.pl > 0 || props.song.fee !== 1) || props.song.privilege?.payed)
 
 const handleClick = () => {
   emit('click', props.song)

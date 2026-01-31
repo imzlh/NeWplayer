@@ -164,14 +164,14 @@ export const usePlayerStore = defineStore('player', () => {
     if (!audio.value) return
 
     // 检查歌曲是否可用
-    try {
-      const checkRes = await api.checkMusic(song.id)
-      if (!checkRes.success) {
-        throw new Error(checkRes.message || '歌曲不可用')
-      }
-    } catch (error) {
-      console.warn('歌曲检查失败，尝试播放:', song.name)
-    }
+    // try {
+    //   const checkRes = await api.checkMusic(song.id)
+    //   if (!checkRes.success) {
+    //     throw new Error(checkRes.message || '歌曲不可用')
+    //   }
+    // } catch (error) {
+    //   console.warn('歌曲检查失败，尝试播放:', song.name)
+    // }
 
     isLoading.value = true
     

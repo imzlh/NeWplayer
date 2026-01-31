@@ -11,7 +11,11 @@
         />
         <div class="user-info">
           <h1 class="user-name">{{ userStore.nickname }}</h1>
-          <p class="user-signature text-ellipsis">{{ userStore.user?.signature || '这个人很懒，什么都没有留下' }}</p>
+          <p class="user-signature" v-if="userStore.user?.signature" 
+            @click="showText(userStore.user.signature)">
+            {{ userStore.user.signature }}
+          </p>
+          <p class="user-signature text-ellipsis" v-else>这个人很懒，什么都没有留下</p>
         </div>
       </div>
       <div class="user-stats">
@@ -118,6 +122,8 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getImageUrl } from '@/utils/lyric'
 import { getLikeList } from '@/api'
+import { showConfirm } from '@/stores/confirm'
+import { showText } from '@/stores/text'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -143,22 +149,24 @@ const goToUserPlaylists = () => router.push('/user-playlists')
 const goToDailyRecommend = () => router.push('/daily-recommend')
 const goToHistory = () => router.push('/history')
 const goToLikedSongs = () => {
-  // 跳转到喜欢的音乐歌单
-  // 需要获取喜欢音乐的歌单ID
+  // 跳转到喜欢的音乐页面
+  router.push('/favorite')
 }
 
-const showSettings = () => {
-  // 显示设置面板
-  const showSettings = inject('showSettings') as () => void
-  showSettings()
-}
+const showSettings = inject<() => void>('showSettings');
 
 // 退出登录
 const handleLogout = async () => {
-  if (confirm('确定要退出登录吗？')) {
-    await userStore.logoutUser()
-    router.push('/')
-  }
+  showConfirm(
+    '确定要退出登录吗？',
+    async (confirm) => {
+      if (confirm) {
+        await userStore.logoutUser()
+        router.push('/')
+      }
+    },
+    '退出登录'
+  )
 }
 
 onMounted(() => {
@@ -236,13 +244,13 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: $font-lg;
+  font-size: $font-xl;
   font-weight: 600;
   color: $text-primary;
 }
 
 .stat-label {
-  font-size: $font-xs;
+  font-size: $font-sm;
   color: $text-tertiary;
 }
 
@@ -260,7 +268,7 @@ onMounted(() => {
 .menu-item {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: $spacing-lg;
   padding: $spacing-md $spacing-lg;
   cursor: pointer;
   transition: background $transition-fast $ease-default;
@@ -289,7 +297,7 @@ onMounted(() => {
 
 .menu-label {
   flex: 1;
-  font-size: $font-sm;
+  font-size: $font-md;
   color: $text-primary;
 }
 

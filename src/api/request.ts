@@ -59,24 +59,7 @@ export const post = <T = any>(url: string, data?: any): Promise<T> => {
 }
 
 export default request
-
 export namespace KV {
-  export interface ListResult {
-    keys: string[];
-    n: number;
-  }
-
-  export interface FindItem {
-    k: string;
-    v: string;
-  }
-
-  export interface FindResult {
-    find: string;
-    items: FindItem[];
-    n: number;
-  }
-
   export class Error extends globalThis.Error {
     constructor(
       message: string,
@@ -87,25 +70,28 @@ export namespace KV {
     }
   }
 
+  const TIMEOUT = 10000;
+
   async function req(
     method: string,
-    key: string,
+    key?: string,
     body?: string,
-    signal?: AbortSignal
+    query?: Record<string, string>
   ): Promise<Response> {
-    const url = `${KV_URL.replace(/\/$/, '')}?prefix=${encodeURIComponent(key).replace(/%2F/g, '/')}`;
+    const params = new URLSearchParams();
+    if (key) params.set('key', key);
+    if (query) Object.entries(query).forEach(([k, v]) => params.set(k, v));
+
+    const url = `${KV_URL}?${params.toString()}`;
     const ctrl = new AbortController();
-    const id = setTimeout(() => ctrl.abort(), 3000);
+    const id = setTimeout(() => ctrl.abort(), TIMEOUT);
 
     try {
       const res = await fetch(url, {
         method,
-        headers: {
-          'Accept': 'application/json, text/plain',
-          ...(body ? { 'Content-Type': 'text/plain' } : {})
-        },
+        headers: body ? { 'Content-Type': 'text/plain' } : {},
         body,
-        signal: signal || ctrl.signal
+        signal: ctrl.signal
       });
       return res;
     } finally {
@@ -113,66 +99,113 @@ export namespace KV {
     }
   }
 
+  /** GET ?key=xxx - 返回原始值或 null (404) */
   export async function get(key: string): Promise<string | null> {
-    const res = await req('GET', `${key}`);
+    const res = await req('GET', key);
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(await res.text(), res.status, key);
     return res.text();
   }
 
-  export async function put(key: string, value: string | Blob | ArrayBuffer): Promise<boolean> {
+  /** PUT ?key=xxx - body 为值，成功返回 true */
+  export async function put(key: string, value: string | Blob | ArrayBuffer): Promise<void> {
     const body = typeof value === 'string' ? value : await new Response(value).text();
     const res = await req('PUT', key, body);
-    if (!res.ok && res.status !== 201) {
-      const err = await res.json().catch(() => ({ err: 'Unknown' }));
-      throw new Error(err.err, res.status, key);
-    }
-    return true;
-  }
-
-  export async function del(key: string): Promise<boolean> {
-    const res = await req('DELETE', key);
-    if (res.status === 404) return false;
     if (!res.ok) throw new Error(await res.text(), res.status, key);
-    return true;
+    // 成功返回 204，无内容
   }
 
+  function buildURL(key?: string, query?: Record<string, string>): string {
+    const params = new URLSearchParams();
+    if (key) params.set('key', key);
+    if (query) Object.entries(query).forEach(([k, v]) => params.set(k, v));
+    const qs = params.toString();
+    return qs ? `${KV_URL}?${qs}` : KV_URL;
+  }
+
+  export function putUnload(key: string, value: string): boolean {
+    const url = buildURL(key);
+    const blob = new Blob([value], { type: 'text/plain' });
+
+    // 1. Beacon API (最优：系统级保证发送，不阻塞，64KB限制)
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      try {
+        if (navigator.sendBeacon(url, blob)) return true;
+      } catch {
+        // 失败则降级
+      }
+    }
+
+    // 2. Fetch keepalive (次选：可能需要浏览器支持，不阻塞)
+    if (typeof fetch !== 'undefined') {
+      try {
+        fetch(url, {
+          method: 'POST', // PHP 已支持 POST = PUT
+          keepalive: true,
+          headers: { 'Content-Type': 'text/plain' },
+          body: value
+        }).catch(() => { }); // fire and forget
+        return true;
+      } catch {
+        // 失败则降级
+      }
+    }
+
+    // 3. Sync XHR (兜底：阻塞式，确保发送完成)
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url, false); // false = 同步
+      xhr.setRequestHeader('Content-Type', 'text/plain');
+      xhr.send(value);
+      return xhr.status === 204 || xhr.status === 200;
+    } catch {
+      return false;
+    }
+  }
+
+  /** DELETE ?key=xxx - 成功返回 void，不存在抛 404 */
+  export async function del(key: string): Promise<void> {
+    const res = await req('DELETE', key);
+    if (res.status === 404) throw new Error('Not found', 404, key);
+    if (!res.ok) throw new Error(await res.text(), res.status, key);
+  }
+
+  /** LIST ?list=1&prefix=xxx - 返回 key 数组 */
   export async function list(prefix = ''): Promise<string[]> {
-    const q = prefix ? `?list=1&prefix=${encodeURIComponent(prefix)}` : '?list=1';
-    const url = `${KV_URL.replace(/\/$/, '')}/${q}`;
-
-    const res = await fetch(url, {
-      headers: {
-        'Accept': 'application/json, text/plain',
-      },
-      signal: AbortSignal.timeout(3000)
-    });
-
+    const res = await fetch(
+      `${KV_URL}?list=1${prefix ? `&prefix=${encodeURIComponent(prefix)}` : ''}`,
+      { signal: AbortSignal.timeout(TIMEOUT) }
+    );
     if (!res.ok) throw new Error(await res.text(), res.status);
-    const data: ListResult = await res.json() as ListResult;
-    return data.keys;
+
+    const text = await res.text();
+    return text.trim() ? text.trim().split('\n') : [];
   }
 
-  export async function find(query: string): Promise<FindItem[]> {
-    const url = `${KV_URL.replace(/\/$/, '')}/?find=${encodeURIComponent(query)}`;
-    const res = await fetch(url, {
-      headers: {
-        'Accept': 'application/json, text/plain',
-      },
-      signal: AbortSignal.timeout(3000)
-    });
-
+  /** FIND ?find=query - 返回 {k,v} 数组 */
+  export async function find(query: string): Promise<{ key: string, value: string }[]> {
+    const res = await fetch(
+      `${KV_URL}?find=${encodeURIComponent(query)}`,
+      { signal: AbortSignal.timeout(TIMEOUT) }
+    );
     if (!res.ok) throw new Error(await res.text(), res.status);
-    const data: FindResult = await res.json() as FindResult;
-    return data.items;
+
+    const items: { key: string, value: string }[] = [];
+    const text = await res.text();
+    if (!text.trim()) return items;
+
+    for (const line of text.trim().split('\n')) {
+      const tab = line.indexOf('\t');
+      if (tab === -1) continue;
+      items.push({
+        key: line.slice(0, tab),
+        value: line.slice(tab + 1)
+      });
+    }
+    return items;
   }
 
-  // High-level wrapper
-  export const $ = {
-    get,
-    set: put,
-    delete: del,
-    list,
-    find
-  };
+  // 别名
+  export const set = put;
+  export const remove = del;
 }

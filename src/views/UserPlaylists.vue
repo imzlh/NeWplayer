@@ -173,7 +173,7 @@ onMounted(fetchPlaylists)
 .tab-item {
   flex: 1;
   padding: $spacing-md 0;
-  font-size: $font-size-md;
+  font-size: $font-md;
   color: $text-secondary;
   background: transparent;
   border: none;

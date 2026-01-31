@@ -276,12 +276,18 @@ const playSong = async (song: ISong) => {
 }
 
 // 更多操作
+const showSettings = inject<() => void>('showSettings')
 const showOptions = (_e: MouseEvent) => {
   showAction([
     {
       label: document.fullscreenElement ? '退出全屏' : '全屏',
       icon: document.fullscreenElement ? svg['exit-fullscreen'] : svg.fullscreen,
       value: 'fullscreen'
+    },
+    {
+      label: 'UI设置',
+      icon: svg.setting,
+      value: 'settings'
     }
   ], o => {
     switch (o.value) {
@@ -291,6 +297,9 @@ const showOptions = (_e: MouseEvent) => {
         } else {
           document.documentElement.requestFullscreen()
         }
+        break
+      case 'settings':
+        showSettings?.();
         break
     }
   });

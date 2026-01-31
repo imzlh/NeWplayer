@@ -143,6 +143,14 @@ const qrLoading = ref(false)
 const qrExpired = ref(false)
 const qrCheckTimer = ref<ReturnType<typeof setInterval> | null>(null)
 
+// 监听登录变化
+watch(() => userStore.isLoggedIn, b => {
+  if (b) {
+    // 登录成功后，跳转到上一页或首页
+    router.push(route.query.from as string || '/')
+  }
+})
+
 const qrStatusText = computed(() => {
   switch (qrStatus.value) {
     case 0:

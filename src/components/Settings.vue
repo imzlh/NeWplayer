@@ -24,8 +24,7 @@
                     </svg>
                   </button>
                   <div class="control-value">
-                    <span class="value-text">{{ fontSize }}px</span>
-                    <span class="value-rem">({{ (fontSize / 16).toFixed(2) }}rem)</span>
+                    <span class="value-text">{{ fontSize }}px ( {{ (fontSize / 16 * 100).toFixed(0) }}% )</span>
                   </div>
                   <button class="control-btn" @click="increaseFontSize">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,7 +34,7 @@
                   </button>
                 </div>
                 <div class="setting-desc">
-                  调整界面元素大小，默认为16px (1rem)
+                  调整界面元素大小，默认为16px
                 </div>
               </div>
             </section>
@@ -224,13 +223,8 @@ const handleOverlayClick = () => close()
   display: block;
 }
 
-.value-rem {
-  font-size: $font-sm;
-  color: $text-secondary;
-}
-
 .setting-desc {
-  font-size: $font-sm;
+  font-size: $font-xs;
   color: $text-secondary;
   line-height: 1.4;
 }
@@ -266,13 +260,14 @@ const handleOverlayClick = () => close()
 }
 
 .reset-btn {
-  padding: $spacing-sm $spacing-lg;
-  background: transparent;
-  border: 1px solid $border-light;
-  border-radius: 20px;
+  padding: $spacing-lg $spacing-sm;
+  background: #666974;
+  border-radius: .5rem;
   color: $text-secondary;
   font-size: $font-sm;
   transition: all $transition-fast $ease-default;
+  width: 100%;
+  display: block;
   
   &:hover {
     border-color: $primary-color;
