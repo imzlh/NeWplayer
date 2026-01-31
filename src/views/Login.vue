@@ -111,6 +111,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
 import Loading from '@/components/Loading.vue'
+import { showText } from '@/stores/text'
 
 const router = useRouter()
 const route = useRoute()
@@ -163,7 +164,7 @@ const handleLogin = async () => {
     const redirect = route.query.redirect as string
     router.push(redirect || '/')
   } else {
-    alert(result.message)
+    showText(result.message)
   }
 }
 

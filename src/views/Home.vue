@@ -2,7 +2,7 @@
   <div class="home-page">
     <!-- 头部 -->
     <header class="home-header">
-      <div class="header-logo">
+      <div class="header-logo" @click="showOptions">
         <span>NeWplayer</span>
       </div>
       <button class="header-search" @click="goToSearch">
@@ -130,6 +130,8 @@ import Banner from '@/components/Banner.vue'
 import PlaylistCard from '@/components/PlaylistCard.vue'
 import SongListItem from '@/components/SongListItem.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import { showAction } from '@/stores/action'
+import { svg } from '@/utils/svg'
 
 const router = useRouter()
 const playerStore = usePlayerStore()
@@ -271,6 +273,27 @@ const handleShortcutClick = (item: typeof shortcuts[0]) => {
 // 播放歌曲
 const playSong = async (song: ISong) => {
   await playerStore.play(song)
+}
+
+// 更多操作
+const showOptions = (_e: MouseEvent) => {
+  showAction([
+    {
+      label: document.fullscreenElement ? '退出全屏' : '全屏',
+      icon: document.fullscreenElement ? svg['exit-fullscreen'] : svg.fullscreen,
+      value: 'fullscreen'
+    }
+  ], o => {
+    switch (o.value) {
+      case 'fullscreen':
+        if (document.fullscreenElement) {
+          document.exitFullscreen()
+        } else {
+          document.documentElement.requestFullscreen()
+        }
+        break
+    }
+  });
 }
 
 // 跳转方法

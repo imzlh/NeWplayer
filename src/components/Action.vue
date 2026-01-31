@@ -253,7 +253,7 @@ $bg-card-inner: #575d6c;
 .drag-indicator {
   width: 36px;
   height: 5px;
-  background: $border-light;
+  background: rgb(198, 198, 198);
   border-radius: $radius-sm;
   margin: 8px auto 12px;
   flex-shrink: 0;
@@ -286,7 +286,7 @@ $bg-card-inner: #575d6c;
   width: 100%;
   padding: $spacing-md;
   font-size: $font-lg;
-  color: $primary-color;
+  color: white;
   background: $bg-card-inner;
   border: none;
   border-bottom: 1px solid $border-light;
@@ -295,8 +295,8 @@ $bg-card-inner: #575d6c;
   text-align: center;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: $spacing-xs;
+  gap: $spacing-xl;
+  padding-left: $spacing-xl;
   min-height: 56px;
 
   &:last-child {
@@ -308,7 +308,7 @@ $bg-card-inner: #575d6c;
   }
 
   &.destructive {
-    color: rgb(255, 169, 169);
+    color: rgb(255, 208, 208);
   }
 
   &.disabled {

@@ -1,3 +1,4 @@
+import { songDetail2Song } from './helper'
 import { get } from './request'
 import type {
   ApiResponse,
@@ -15,7 +16,8 @@ import type {
   IMV, ISearchSuggest,
   IPlaylistType,
   CommentResponse,
-  IToplist
+  IToplist,
+  ISongDetail
 } from '@/types'
 
 // ==================== 登录相关 ====================
@@ -112,10 +114,17 @@ export const updateUserProfile = (data: {
 // ==================== 歌曲相关 ====================
 
 // 获取歌曲详情
-export const getSongDetail = (ids: number | number[]): Promise<ApiResponse<{ songs: ISong[]; privileges: any[] }>> => {
+export const getSongDetail = (ids: number | number[]): Promise<ApiResponse<{ songs: ISongDetail[]; privileges: any[] }>> => {
   const idStr = Array.isArray(ids) ? ids.join(',') : ids
   return get('/song/detail', { ids: idStr })
 }
+
+export const getSongDetail2 = (ids: number | number[]): Promise<ApiResponse<{ songs: ISong[]; privileges: any[] }>> => 
+  getSongDetail(ids).then(res => ({
+    code: res.code,
+    songs: res.songs.map(songDetail2Song),
+    privileges: res.privileges,
+  }))
 
 // 获取歌曲URL
 export const getSongUrl = (id: number, br = 999000): Promise<ApiResponse<{ id: number; url: string; br: number; size: number; type: string; code: number }[]>> => {
@@ -274,7 +283,7 @@ export const getNewSongs = (limit = 10): Promise<ApiResponse<{ result: { id: num
 // ==================== 歌手相关 ====================
 
 // 获取歌手详情
-export const getArtistDetail = (id: number): Promise<ApiResponse> => {
+export const getArtistDetail = (id: number): Promise<ApiResponse<IArtist>> => {
   return get('/artist/detail', { id })
 }
 

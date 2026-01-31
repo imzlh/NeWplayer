@@ -55,6 +55,8 @@ export const usePlayerStore = defineStore('player', () => {
           return;
         }
         audio.value!.src = url;
+
+        updateMediaSessionMetadata(currentSong.value!);
       }
     } catch (error) {
       console.error('恢复播放状态失败:', error)
@@ -111,6 +113,9 @@ export const usePlayerStore = defineStore('player', () => {
     audio.value = new Audio()
     audio.value.volume = volume.value
     
+    // 初始化Media Session API
+    initMediaSession()
+    
     // 恢复播放状态
     restorePlayerState()
     
@@ -120,6 +125,8 @@ export const usePlayerStore = defineStore('player', () => {
         updateCurrentLyric()
         // 保存播放进度
         savePlayerState()
+        // 更新Media Session的播放位置
+        updateMediaSessionPosition()
       }
     })
     
@@ -177,6 +184,14 @@ export const usePlayerStore = defineStore('player', () => {
         throw new Error('无法获取播放地址')
       }
 
+      // 获取封面
+      if (!song.picUrl) {
+        const detail = await api.getSongDetail(song.id);
+        song.picUrl = detail.songs[0].al.picUrl
+        song.album = detail.songs[0].al
+        song.artists = detail.songs[0].ar;
+      }
+
       // 设置音频源
       audio.value.src = songData.url
       currentSong.value = song
@@ -193,6 +208,9 @@ export const usePlayerStore = defineStore('player', () => {
 
       // 获取歌词
       await fetchLyric(song.id)
+
+      // 更新Media Session
+      updateMediaSessionMetadata(song)
 
       // 添加到播放历史
       addToHistory(song)
@@ -242,6 +260,9 @@ export const usePlayerStore = defineStore('player', () => {
         next()
       }
     }
+    
+    // 更新Media Session的播放状态
+    updateMediaSessionPlaybackState()
     
     // 保存播放状态
     savePlayerState()
@@ -318,6 +339,9 @@ export const usePlayerStore = defineStore('player', () => {
     if (audio.value && duration.value > 0) {
       audio.value.currentTime = Math.max(0, Math.min(time, duration.value))
       progress.value = audio.value.currentTime
+      
+      // 更新Media Session的播放位置
+      updateMediaSessionPosition()
     }
   }
 
@@ -571,6 +595,94 @@ export const usePlayerStore = defineStore('player', () => {
       await playNextFM()
     }
   }
+  
+  // ============ Media Session API ============
+  
+  // 初始化Media Session
+  const initMediaSession = () => {
+    if (!('mediaSession' in navigator)) return
+    
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: '网易云音乐',
+      artist: 'NeWPlayer',
+      album: '在线音乐',
+      artwork: [
+        { src: '/favicon.webp', sizes: '96x96', type: 'image/webp' },
+        { src: '/favicon.webp', sizes: '128x128', type: 'image/webp' },
+        { src: '/favicon.webp', sizes: '192x192', type: 'image/webp' },
+        { src: '/favicon.webp', sizes: '256x256', type: 'image/webp' },
+        { src: '/favicon.webp', sizes: '384x384', type: 'image/webp' },
+        { src: '/favicon.webp', sizes: '512x512', type: 'image/webp' }
+      ]
+    })
+    
+    // 设置播放状态
+    navigator.mediaSession.playbackState = isPlaying.value ? 'playing' : 'paused'
+    
+    // 设置操作处理器
+    navigator.mediaSession.setActionHandler('play', () => audio.value?.play())
+    navigator.mediaSession.setActionHandler('pause', () => audio.value?.pause());
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      if (isPersonalFM.value) {
+        // 私人FM模式下没有上一首
+        return
+      }
+      prev()
+    })
+    navigator.mediaSession.setActionHandler('nexttrack', next)
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      if (details.seekTime !== undefined) {
+        seek(details.seekTime)
+      }
+    })
+    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+      const seekTime = Math.max(0, progress.value - (details.seekOffset || 10))
+      seek(seekTime)
+    })
+    navigator.mediaSession.setActionHandler('seekforward', (details) => {
+      const seekTime = Math.min(duration.value, progress.value + (details.seekOffset || 10))
+      seek(seekTime)
+    })
+  }
+  
+  // 更新Media Session的元数据
+  const updateMediaSessionMetadata = (song: ISong) => {
+    if (!('mediaSession' in navigator) || !song) return
+    
+    const imageUrl = song.picUrl || song.album?.picUrl || '/favicon.webp'
+    
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.name,
+      artist: song.artists?.map(a => a.name).join(' / ') || '未知艺术家',
+      album: song.album?.name || '未知专辑',
+      artwork: [
+        { src: imageUrl, sizes: '96x96', type: 'image/jpeg' },
+        { src: imageUrl, sizes: '128x128', type: 'image/jpeg' },
+        { src: imageUrl, sizes: '192x192', type: 'image/jpeg' },
+        { src: imageUrl, sizes: '256x256', type: 'image/jpeg' },
+        { src: imageUrl, sizes: '384x384', type: 'image/jpeg' },
+        { src: imageUrl, sizes: '512x512', type: 'image/jpeg' }
+      ]
+    })
+  }
+  
+  // 更新Media Session的播放状态
+  const updateMediaSessionPlaybackState = () => {
+    if (!('mediaSession' in navigator)) return
+    
+    navigator.mediaSession.playbackState = isPlaying.value ? 'playing' : 'paused'
+  }
+  
+  // 更新Media Session的播放位置
+  const updateMediaSessionPosition = () => {
+    if (!('mediaSession' in navigator) || duration.value === 0) return
+    
+    navigator.mediaSession.setPositionState({
+      duration: duration.value,
+      playbackRate: audio.value?.playbackRate || 1,
+      position: progress.value
+    })
+  }
 
   // 清空播放列表
   const clearPlaylist = () => {
@@ -666,5 +778,10 @@ export const usePlayerStore = defineStore('player', () => {
     playNextFM,
     skipFMSong,
     trashFMSong,
+    // Media Session API相关函数
+    initMediaSession,
+    updateMediaSessionMetadata,
+    updateMediaSessionPlaybackState,
+    updateMediaSessionPosition,
   }
 })

@@ -536,12 +536,12 @@ onMounted(() => {
 }
 
 .search-input {
-  flex: 1;
   font-size: $font-sm;
   color: $text-primary;
   background: none;
   border: none;
   outline: none;
+  flex-shrink: 1;
   
   &::placeholder {
     color: $text-muted;
@@ -693,6 +693,7 @@ onMounted(() => {
   color: $text-tertiary;
   position: relative;
   transition: color $transition-fast $ease-default;
+  flex: 1;
   
   &.tab-active {
     color: $primary-color;

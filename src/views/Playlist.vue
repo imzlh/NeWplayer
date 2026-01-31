@@ -305,7 +305,7 @@ const showMoreActions = () => {
         break
       case 'share':
         // 实现分享功能
-        alert('分享功能待实现')
+        showText('分享功能待实现')
         break
     }
   })
@@ -370,7 +370,7 @@ const showSongActions = (song: ISong) => {
       case 'delete':
         // 删除歌曲（如果是自己的歌单）
         if (!isCreator.value) {
-          alert('只有歌单创建者才能删除歌曲')
+          showText('只有歌单创建者才能删除歌曲')
           return
         }
 
@@ -474,7 +474,7 @@ const batchOperate = (option?: any) => {
   if (!action) return
 
   if (selectedSongs.value.size === 0) {
-    alert('请先选择歌曲')
+    showText('请先选择歌曲')
     return
   }
 
@@ -512,7 +512,7 @@ const batchOperate = (option?: any) => {
     case 'delete':
       // 删除选中的歌曲（如果是自己的歌单）
       if (!isCreator.value) {
-        alert('只有歌单创建者才能删除歌曲')
+        showText('只有歌单创建者才能删除歌曲')
         return
       }
 

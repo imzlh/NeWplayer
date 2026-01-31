@@ -9,8 +9,8 @@
     <!-- 背景 -->
     <div class="player-background">
       <img
-        v-if="playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl"
-        :src="getHighResImageUrl(playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl)"
+        v-if="playerStore.currentSong?.picUrl"
+        :src="getHighResImageUrl(playerStore.currentSong?.picUrl)"
         class="bg-image"
         alt=""
       />

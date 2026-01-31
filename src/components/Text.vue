@@ -241,12 +241,12 @@ onBeforeUnmount(() => {
 }
 
 .content-wrapper {
-    background: rgb(65, 65, 65);
     border-radius: 14px;
     padding: 16px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     height: 100%;
+    min-height: 40vh;
 }
 
 .content-text {

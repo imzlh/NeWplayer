@@ -29,6 +29,103 @@ export interface ISong {
   privilege?: IPrivilege
 }
 
+// 音质信息接口
+interface IAudioQuality {
+  br: number;                // 比特率
+  size: number;              // 文件大小
+  sr: number;                // 采样率
+  vd: number;                // 音量衰减？
+}
+
+// 音质信息接口（添加了fid字段）
+interface IAudioQuality {
+  br: number;               // 比特率
+  fid: number;              // 文件ID
+  size: number;             // 文件大小
+  vd: number;               // 音量/音质衰减值
+  sr: number;               // 采样率
+}
+
+// 原曲信息接口（第二个数据中新增的）
+interface IOriginSongSimpleData {
+  songId: number;
+  name: string;
+  artists: Array<{
+    id: number;
+    name: string;
+  }>;
+  albumMeta: {
+    id: number;
+    name: string;
+  };
+}
+
+// 完整的音乐信息接口（做了重要调整）
+export interface ISongDetail {
+  // 基本信息
+  id: number;
+  name: string;
+  fee: number;               // 0=免费
+  dt: number;                // 时长（毫秒）
+  publishTime: number;       // 发布时间戳
+  pop: number;               // 热度
+  no: number;                // 专辑内序号
+  version: number;           // 版本号
+
+  // 艺术家信息（可能是数组）
+  ar: IArtist[];
+
+  // 专辑信息
+  al: IAlbum;
+
+  // 音质信息（注意：sq和hr可能是null）
+  h?: IAudioQuality;         // 高品质
+  m?: IAudioQuality;         // 中品质
+  l?: IAudioQuality;         // 低品质
+  sq?: IAudioQuality | null; // 无损品质（可为null）
+  hr?: IAudioQuality | null; // 高解析度（可为null）
+
+  // 版权信息
+  cp: number;                // 版权方ID
+  copyright: number;         // 版权类型
+  originCoverType: number;   // 封面类型
+
+  // 额外信息
+  alia: string[];            // 歌曲别名
+  tns: string[];            // 翻译名
+  mark: number;              // 标记值
+  single: number;            // 是否单曲
+  mv: number;                // MV ID
+
+  // 原曲信息（可选，针对翻唱/改编歌曲）
+  originSongSimpleData?: IOriginSongSimpleData;
+
+  // 其他常用字段
+  cd: string;                // 光盘号
+  v: number;                 // 版本号？
+  rtype: number;             // 资源类型
+  st?: number;
+  pst?: number;
+  t?: number;
+  rt?: string;
+  crbt?: any;
+  cf?: string;
+  rtUrl?: any;
+  rtUrls?: any[];
+  djId?: number;
+  s_id?: number;
+  resourceState?: boolean;
+  tagPicList?: any;
+  songJumpInfo?: any;
+  entertainmentTags?: any;
+  awardTags?: any;
+  displayTags?: any[];
+  markTags?: any[];
+  noCopyrightRcmd?: any;
+  rurl?: any;
+  a?: any;
+}
+
 // 歌手类型
 export interface IArtist {
   id: number
