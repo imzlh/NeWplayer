@@ -12,10 +12,10 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'http://192.168.1.2:3000',
+      '/@neast/': {
+        target: 'http://192.168.1.2:3000',  // 确保这是正确的 API 地址
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace('/@neast/', ''),
       },
     },
   },
@@ -23,5 +23,13 @@ export default defineConfig({
     target: 'chrome70',
     outDir: 'dist',
     assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          return 'index';
+        }
+      }
+    }
   },
+  base: './'
 })

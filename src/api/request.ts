@@ -3,7 +3,7 @@ import type { ApiResponse } from '@/types'
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: '/@neast',
   timeout: 30000,
   withCredentials: true,
   headers: {

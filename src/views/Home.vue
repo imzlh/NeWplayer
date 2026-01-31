@@ -122,7 +122,6 @@
 import { ref, reactive, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
-import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
 import type { IBanner, IPlaylist, IArtist, ISong } from '@/types'
 import { getImageUrl } from '@/utils/lyric'
@@ -134,7 +133,6 @@ import Skeleton from '@/components/Skeleton.vue'
 
 const router = useRouter()
 const playerStore = usePlayerStore()
-const userStore = useUserStore()
 const openPlayer = inject<() => void>('openPlayer')
 
 // 数据

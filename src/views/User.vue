@@ -117,6 +117,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getImageUrl } from '@/utils/lyric'
+import { getLikeList } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -127,7 +128,6 @@ const likeCount = ref(0)
 const fetchLikeCount = async () => {
   if (userStore.userId) {
     try {
-      const { getLikeList } = await import('@/api')
       const res = await getLikeList(userStore.userId)
       if (res.code === 200) {
         likeCount.value = res.ids?.length || 0

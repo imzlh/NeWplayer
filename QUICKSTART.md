@@ -59,10 +59,10 @@ npm run build
 ```typescript
 server: {
   proxy: {
-    '/api': {
+    '/@neast/': {
       target: 'http://localhost:3000',  // 确保这是正确的 API 地址
       changeOrigin: true,
-      rewrite: (path) => path.replace(/^\/api/, ''),
+      rewrite: (path) => path.replace(/^\/neast/, ''),
     },
   },
 },
