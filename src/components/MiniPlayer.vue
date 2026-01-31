@@ -7,7 +7,7 @@
   >
     <!-- 歌曲封面 -->
     <div class="player-cover">
-      <img
+      <img v-if="playerStore.currentSong?.picUrl"
         :src="getImageUrl(playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl, 60, 60)"
         :alt="playerStore.currentSong?.name"
         class="cover-image"
@@ -141,6 +141,7 @@ const goToPlayer = () => {
   border-radius: $radius-md;
   overflow: hidden;
   flex-shrink: 0;
+  background-color: #5a5b7b;
 }
 
 .cover-image {

@@ -289,6 +289,7 @@ import Comment from '@/components/Comment.vue'
 import { showAction } from '@/stores/action'
 import { getSongUrl } from '@/api'
 import { svg } from '@/utils/svg'
+import router from '@/router'
 
 const emit = defineEmits<{
   close: []
@@ -422,6 +423,20 @@ const showMore = () => {
       value: 'comments',
       icon: svg.comment
     },
+    ...playerStore.currentSong.artists.map(artist => ({
+      value: 'artist.' + artist.id,
+      label: '歌手: ' + artist.name,
+      icon: artist.picUrl
+        ? `<img src="${artist.picUrl}" alt="${artist.name}" width="24" height="24">`
+        : svg.people
+    })),
+    {
+      value: 'album',
+      label: '专辑: ' + playerStore.currentSong.album.name,
+      icon: playerStore.currentSong.album.picUrl
+        ? `<img src="${playerStore.currentSong.album.picUrl}" alt="${playerStore.currentSong.album.name}" width="24" height="24">`
+        : svg.album
+    },
     {
       label: '收藏',
       value: 'favorite',
@@ -458,6 +473,28 @@ const showMore = () => {
       case 'share':
         // TODO: 实现分享功能
         console.log('分享功能待实现')
+        break
+      case 'album':
+        if (playerStore.currentSong)
+          router.push({
+            name: 'Album',
+            params: {
+              id: playerStore.currentSong.album.id
+            }
+          });
+        emit('close')
+        break
+      default:
+        const id = option.value.split('.').pop()
+        if (id) {
+          router.push({
+            name: 'Artist',
+            params: {
+              id
+            }
+          });
+        }
+        emit('close')
         break
     }
   })

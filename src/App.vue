@@ -112,7 +112,7 @@ const showNav = computed(() => {
 })
 
 const showMiniPlayer = computed(() => {
-  return !showPlayer.value && !route.meta.fullScreen && playerStore.hasCurrentSong
+  return !showPlayer.value && !route.meta.fullScreen && playerStore.hasCurrentSong  && route.name !== 'Login'
 })
 
 // 打开播放器

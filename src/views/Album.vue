@@ -7,7 +7,14 @@
         </svg>
       </button>
       <h1 class="header-title" :class="{ 'title-visible': headerScrolled }">{{ album.name }}</h1>
-      <div class="header-placeholder"></div>
+      <!-- 评论入口 -->
+      <div v-if="songs.length > 0" class="comment-entry">
+        <button class="comment-btn header-back" @click="showComments = true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </button>
+      </div>
     </header>
     
     <main class="album-content" ref="contentRef" @scroll="handleScroll">
@@ -59,16 +66,6 @@
           />
         </div>
       </section>
-      
-      <!-- 评论入口 -->
-      <div v-if="songs.length > 0" class="comment-entry">
-        <button class="comment-btn" @click="showComments = true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <span>评论</span>
-        </button>
-      </div>
       
       <div class="bottom-spacer"></div>
     </main>

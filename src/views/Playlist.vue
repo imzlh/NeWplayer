@@ -282,6 +282,33 @@ const playSong = async (song: ISong, index: number) => {
 
 // 显示更多操作
 const showMoreActions = () => {
+  const options = [
+    {
+      label: isSubscribed.value ? '取消收藏歌单' : '收藏歌单',
+      value: 'subscribe',
+      icon: svg.love
+    },
+    {
+      label: '分享歌单',
+      value: 'share',
+      icon: svg.share
+    }
+  ]
+
+  showAction(options, (option) => {
+    if (!option) return
+
+    const action = option.value
+    switch (action) {
+      case 'subscribe':
+        toggleSubscribe()
+        break
+      case 'share':
+        // 实现分享功能
+        alert('分享功能待实现')
+        break
+    }
+  })
 }
 
 // 显示歌曲操作
@@ -290,27 +317,27 @@ const showSongActions = (song: ISong) => {
     {
       label: '播放',
       value: 'play',
-      icon: '▶'
+      icon: svg.play
     },
     {
       label: '添加到播放列表',
       value: 'add',
-      icon: '+'
+      icon: svg.add
     },
     {
       label: '收藏',
       value: 'favorite',
-      icon: '♥'
+      icon: svg.love
     },
     {
       label: '下载',
       value: 'download',
-      icon: '⬇'
+      icon: svg.download
     },
     {
       label: '删除',
       value: 'delete',
-      icon: '🗑',
+      icon: svg.delete,
       destructive: true
     }
   ]
