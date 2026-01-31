@@ -296,12 +296,12 @@ $bg-card-inner: #575d6c;
   border-bottom: 0.125rem /* 1px */ solid $border-light;
   cursor: pointer;
   transition: background $transition-fast $ease-default;
-  text-align: center;
   display: flex;
   align-items: center;
   gap: $spacing-xl;
   padding-left: $spacing-xl;
   min-height: 3.5rem /* 56px */;
+  text-align: left;
 
   &:last-child {
     border-bottom: none;
@@ -325,12 +325,6 @@ $bg-card-inner: #575d6c;
 .option-icon {
   font-size: 1.25rem /* 20px */;
   line-height: 1;
-
-  svg {
-    width: 1.25rem /* 20px */;
-    height: 1.25rem /* 20px */;
-    fill: currentColor;
-  }
 }
 
 .option-label {
@@ -380,5 +374,13 @@ $bg-card-inner: #575d6c;
 .action-sheet::-webkit-scrollbar {
   width: 0;
   background: transparent;
+}
+</style>
+
+<style>
+.option-icon > svg, .option-icon > img {
+  width: 1.25rem /* 20px */;
+  height: 1.25rem /* 20px */;
+  fill: currentColor;
 }
 </style>
