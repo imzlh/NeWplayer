@@ -1,0 +1,145 @@
+<template>
+  <div class="history-page">
+    <header class="history-header">
+      <button class="header-back" @click="goBack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h1 class="header-title">播放历史</h1>
+      <button class="header-clear" @click="clearHistory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+        </svg>
+      </button>
+    </header>
+    
+    <main class="history-content">
+      <div v-if="playerStore.playHistory.length === 0" class="history-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <p>暂无播放记录</p>
+        <span>去听几首歌吧~</span>
+      </div>
+      <div v-else class="songs-list">
+        <SongListItem
+          v-for="(song, index) in playerStore.playHistory"
+          :key="`${song.id}-${index}`"
+          :song="song"
+          :index="index"
+          :is-active="playerStore.currentSong?.id === song.id"
+          :is-playing="playerStore.isPlaying && playerStore.currentSong?.id === song.id"
+          @click="playSong(song)"
+        />
+      </div>
+    </main>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { usePlayerStore } from '@/stores/player'
+import type { ISong } from '@/types'
+import SongListItem from '@/components/SongListItem.vue'
+
+const router = useRouter()
+const playerStore = usePlayerStore()
+
+const playSong = async (song: ISong) => {
+  await playerStore.playFromHistory(song)
+}
+
+const clearHistory = () => {
+  if (confirm('确定要清空播放历史吗？')) {
+    playerStore.playHistory = []
+    localStorage.removeItem('playHistory')
+  }
+}
+
+const goBack = () => router.back()
+</script>
+
+<style scoped lang="scss">
+@use '@/styles/variables.scss' as *;
+
+.history-page {
+  min-height: 100vh;
+  padding-bottom: 120px;
+}
+
+.history-header {
+  position: sticky;
+  top: 0;
+  z-index: $z-sticky;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: rgba($bg-primary, 0.95);
+  backdrop-filter: blur(20px);
+}
+
+.header-back,
+.header-clear {
+  width: 40px;
+  height: 40px;
+  @include flex-center;
+  color: $text-secondary;
+  border-radius: 50%;
+  transition: all $transition-fast $ease-default;
+  
+  &:active {
+    background: $bg-card;
+  }
+  
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.header-title {
+  font-size: $font-lg;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.history-content {
+  padding: $spacing-md $spacing-lg;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl 0;
+  color: $text-muted;
+  
+  svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: $spacing-md;
+    opacity: 0.5;
+  }
+  
+  p {
+    font-size: $font-md;
+    color: $text-secondary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  span {
+    font-size: $font-sm;
+  }
+}
+
+.songs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+</style>

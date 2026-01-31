@@ -1,0 +1,197 @@
+// ============ 颜色变量 ============
+
+// 主色调
+$primary-color: #ff4757;
+$primary-light: #ff6b81;
+$primary-dark: #ee5a6f;
+
+// 背景色
+$bg-primary: #0f0f1a;
+$bg-secondary: #1a1a2e;
+$bg-tertiary: #252541;
+$bg-card: #5e5d74;
+$bg-hover: #363663;
+
+// 文字颜色
+$text-primary: #ffffff;
+$text-secondary: rgba(255, 255, 255, 0.8);
+$text-tertiary: rgba(255, 255, 255, 0.5);
+$text-muted: rgba(255, 255, 255, 0.35);
+
+// 边框颜色
+$border-color: rgba(255, 255, 255, 0.1);
+$border-light: rgba(255, 255, 255, 0.05);
+
+// 状态颜色
+$success-color: #2ed573;
+$warning-color: #ffa502;
+$error-color: #ff4757;
+$info-color: #70a1ff;
+
+// 渐变
+$gradient-primary: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+$gradient-bg: linear-gradient(180deg, $bg-secondary 0%, $bg-primary 100%);
+$gradient-card: linear-gradient(145deg, $bg-card 0%, $bg-tertiary 100%);
+
+// ============ 尺寸变量 ============
+
+// 屏幕尺寸（402x512）
+$screen-width: 402px;
+$screen-height: 512px;
+
+// 间距
+$spacing-xs: 6px;
+$spacing-sm: 9px;
+$spacing-md: 13px;
+$spacing-lg: 16px;
+$spacing-xl: 20px;
+$spacing-2xl: 24px;
+
+// 圆角
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-full: 9999px;
+
+// 字体大小
+$font-xs: 13px;
+$font-sm: 15px;
+$font-md: 16px;
+$font-lg: 18px;
+$font-xl: 20px;
+$font-2xl: 21px;
+$font-3xl: 26px;
+
+// 行高
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// ============ 动画变量 ============
+
+// 过渡时间
+$transition-fast: 0.15s;
+$transition-normal: 0.3s;
+$transition-slow: 0.5s;
+
+// 缓动函数
+$ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-in: cubic-bezier(0.4, 0, 1, 1);
+$ease-out: cubic-bezier(0, 0, 0.2, 1);
+$ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// ============ 阴影变量 ============
+
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2);
+$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+$shadow-glow: 0 0 20px rgba($primary-color, 0.3);
+
+// ============ Z-index ============
+
+$z-dropdown: 100;
+$z-sticky: 200;
+$z-modal: 300;
+$z-popover: 400;
+$z-tooltip: 500;
+$z-toast: 600;
+$z-player: 700;
+$z-fixed: 800;
+
+// ============ 混合宏 ============
+
+// 弹性布局居中
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 弹性布局垂直居中
+@mixin flex-y-center {
+  display: flex;
+  align-items: center;
+}
+
+// 文本省略
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行文本省略
+@mixin text-ellipsis-multi($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// 滚动条样式
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $text-muted;
+    border-radius: $radius-full;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: $text-tertiary;
+  }
+}
+
+// 玻璃态效果
+@mixin glass-effect {
+  background: rgba($bg-card, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+// 点击效果
+@mixin tap-effect {
+  transition: transform $transition-fast $ease-default;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 卡片悬停效果
+@mixin card-hover {
+  transition: all $transition-normal $ease-default;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+// 渐变文字
+@mixin gradient-text($gradient: $gradient-primary) {
+  background: $gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// 禁用选择
+@mixin no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+// 硬件加速
+@mixin gpu-accelerate {
+  transform: translateZ(0);
+  will-change: transform;
+}
