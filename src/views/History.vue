@@ -67,7 +67,7 @@ const goBack = () => router.back()
 
 .history-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .history-header {
@@ -79,13 +79,13 @@ const goBack = () => router.back()
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
   background: rgba($bg-primary, 0.95);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(1.25rem /* 20px */);
 }
 
 .header-back,
 .header-clear {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem /* 40px */;
+  height: 2.5rem /* 40px */;
   @include flex-center;
   color: $text-secondary;
   border-radius: 50%;
@@ -96,8 +96,8 @@ const goBack = () => router.back()
   }
   
   svg {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem /* 22px */;
+    height: 1.375rem /* 22px */;
   }
 }
 
@@ -120,8 +120,8 @@ const goBack = () => router.back()
   color: $text-muted;
   
   svg {
-    width: 64px;
-    height: 64px;
+    width: 4rem /* 64px */;
+    height: 4rem /* 64px */;
     margin-bottom: $spacing-md;
     opacity: 0.5;
   }
@@ -140,6 +140,6 @@ const goBack = () => router.back()
 .songs-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 </style>

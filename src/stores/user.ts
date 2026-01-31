@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { IUser } from '@/types'
 import * as api from '@/api'
+import { KV } from '@/api/request'
 
 export const useUserStore = defineStore('user', () => {
   // State
@@ -17,30 +18,42 @@ export const useUserStore = defineStore('user', () => {
   const avatarUrl = computed(() => user.value?.avatarUrl || '')
 
   // Actions
-  const setUser = (userData: IUser | null) => {
+  const setUser = async (userData: IUser | null) => {
     user.value = userData
     isLoggedIn.value = !!userData
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData))
+      await KV.put('new.user.id', userData.userId.toString())
     } else {
       localStorage.removeItem('user')
+      await KV.del('new.user.id')
     }
   }
 
-  const setCookie = (cookieStr: string) => {
+  const setCookie = async (cookieStr: string) => {
     cookie.value = cookieStr
     localStorage.setItem('cookie', cookieStr)
+    await KV.put('new.user.cookie', cookieStr)
   }
 
-  const initFromStorage = () => {
-    const storedUser = localStorage.getItem('user')
-    const storedCookie = localStorage.getItem('cookie')
+  const initFromStorage = async () => {
+    let storedUser = localStorage.getItem('user')
+    let storedCookie = localStorage.getItem('cookie')
+
+    try {
+      storedUser = await KV.get('new.user.id')
+      storedCookie = await KV.get('new.user.cookie')
+    } catch (error) {
+      console.error('Error loading user data from KV:', error)
+    }
+
     if (storedUser) {
       try {
         user.value = JSON.parse(storedUser)
         isLoggedIn.value = true
       } catch {
         localStorage.removeItem('user')
+        await KV.del('new.user.id')
       }
     }
     if (storedCookie) {
@@ -52,17 +65,16 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     try {
       const res = await api.loginByPhone(phone, password, countrycode)
-      if (res.code === 200 && res.profile) {
-        setUser(res.profile)
+      if (res.code === 200) {
         if (res.cookie) {
-          setCookie(res.cookie)
+          await setCookie(res.cookie)
         }
-        await fetchLikeList(res.profile.userId)
+        await checkLoginStatus();
         return { success: true, message: '登录成功' }
       }
-      return { success: false, message: '登录失败' }
+      return { success: false, message: res.message || '登录失败' }
     } catch (error: any) {
-      return { success: false, message: error.response?.data?.message || '登录失败' }
+      return { success: false, message: error.message || '登录失败' }
     } finally {
       loading.value = false
     }
@@ -72,17 +84,16 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     try {
       const res = await api.loginByEmail(email, password)
-      if (res.code === 200 && res.profile) {
-        setUser(res.profile)
+      if (res.code === 200) {
         if (res.cookie) {
-          setCookie(res.cookie)
+          await setCookie(res.cookie)
         }
-        await fetchLikeList(res.profile.userId)
+        await checkLoginStatus();
         return { success: true, message: '登录成功' }
       }
-      return { success: false, message: '登录失败' }
+      return { success: false, message: res.message || '登录失败' }
     } catch (error: any) {
-      return { success: false, message: error.response?.data?.message || '登录失败' }
+      return { success: false, message: error.message || '登录失败' }
     } finally {
       loading.value = false
     }
@@ -102,6 +113,24 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const verifyCaptcha = async (phone: string, captcha: string) => {
+    loading.value = true
+    try {
+      const res = await api.verifyCaptcha(phone, captcha)
+      if (res.code === 200) {
+        await api.refreshLogin();
+        // refresh user
+        if (await checkLoginStatus())
+          return { success: true, message: '验证码验证成功' }
+      }
+      return { success: false, message: '验证码验证失败' }
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || '验证码验证失败' }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const logoutUser = async () => {
     try {
       await api.logout()
@@ -109,7 +138,8 @@ export const useUserStore = defineStore('user', () => {
       setUser(null)
       cookie.value = ''
       likeList.value = []
-      localStorage.removeItem('cookie')
+      localStorage.removeItem('cookie') 
+      await KV.del('new.user.cookie')
     }
   }
 
@@ -167,6 +197,7 @@ export const useUserStore = defineStore('user', () => {
     loginByPhone,
     loginByEmail,
     checkLoginStatus,
+    verifyCaptcha,
     logoutUser,
     fetchLikeList,
     isLiked,

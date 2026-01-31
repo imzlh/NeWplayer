@@ -113,28 +113,28 @@ defineExpose({
   @include glass-effect;
   
   &.toast-success {
-    border-left: 3px solid $success-color;
+    border-left: 0.25rem /* 3px */ solid $success-color;
     .toast-icon {
       color: $success-color;
     }
   }
   
   &.toast-error {
-    border-left: 3px solid $error-color;
+    border-left: 0.25rem /* 3px */ solid $error-color;
     .toast-icon {
       color: $error-color;
     }
   }
   
   &.toast-warning {
-    border-left: 3px solid $warning-color;
+    border-left: 0.25rem /* 3px */ solid $warning-color;
     .toast-icon {
       color: $warning-color;
     }
   }
   
   &.toast-info {
-    border-left: 3px solid $info-color;
+    border-left: 0.25rem /* 3px */ solid $info-color;
     .toast-icon {
       color: $info-color;
     }
@@ -142,8 +142,8 @@ defineExpose({
 }
 
 .toast-icon {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem /* 18px */;
+  height: 1.125rem /* 18px */;
   flex-shrink: 0;
 }
 
@@ -161,12 +161,12 @@ defineExpose({
 
 .toast-enter-from {
   opacity: 0;
-  transform: translateY(-20px) scale(0.9);
+  transform: translateY(-1.25rem /* 20px */) scale(0.9);
 }
 
 .toast-leave-to {
   opacity: 0;
-  transform: translateY(-20px) scale(0.9);
+  transform: translateY(-1.25rem /* 20px */) scale(0.9);
 }
 
 .toast-leave-active {

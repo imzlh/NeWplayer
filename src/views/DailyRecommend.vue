@@ -118,7 +118,7 @@ onMounted(fetchDailySongs)
 
 .daily-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .daily-header {
@@ -137,22 +137,22 @@ onMounted(fetchDailySongs)
   
   &.header-scrolled {
     background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(1.25rem /* 20px */);
   }
 }
 
 .header-back {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: white;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem /* 10px */);
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -169,7 +169,7 @@ onMounted(fetchDailySongs)
 }
 
 .header-placeholder {
-  width: 36px;
+  width: 2.25rem /* 36px */;
 }
 
 .daily-content {
@@ -178,19 +178,19 @@ onMounted(fetchDailySongs)
 
 .daily-info {
   position: relative;
-  padding: 80px $spacing-lg $spacing-lg;
+  padding: 5rem /* 80px */ $spacing-lg $spacing-lg;
   background: linear-gradient(180deg, rgba($primary-color, 0.3) 0%, $bg-primary 100%);
 }
 
 .info-calendar {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 0.25rem /* 4px */;
   margin-bottom: $spacing-sm;
 }
 
 .calendar-day {
-  font-size: 48px;
+  font-size: 3rem /* 48px */;
   font-weight: 700;
   color: white;
   line-height: 1;
@@ -210,7 +210,7 @@ onMounted(fetchDailySongs)
   display: flex;
   gap: $spacing-md;
   padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .action-btn {
@@ -226,8 +226,8 @@ onMounted(fetchDailySongs)
   transition: all $transition-fast $ease-default;
   
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
   
   &.action-playall {
@@ -247,10 +247,10 @@ onMounted(fetchDailySongs)
 .songs-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 </style>

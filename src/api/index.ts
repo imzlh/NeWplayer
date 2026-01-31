@@ -20,56 +20,58 @@ import type {
   ISongDetail
 } from '@/types'
 
+const nocache = true;
+
 // ==================== 登录相关 ====================
 
 // 手机号登录
 export const loginByPhone = (phone: string, password: string, countrycode?: string): Promise<ILoginResponse> => {
-  return get('/login/cellphone', { phone, password, countrycode })
+  return get('/login/cellphone', { phone, password, countrycode, nocache })
 }
 
 // 邮箱登录
 export const loginByEmail = (email: string, password: string): Promise<ILoginResponse> => {
-  return get('/login', { email, password })
+  return get('/login', { email, password, nocache })
 }
 
 // 发送验证码
-export const sendCaptcha = (phone: string, ctcode?: string): Promise<ApiResponse> => {
-  return get('/captcha/sent', { phone, ctcode })
+export const sendCaptcha = (phone: string, ctcode?: string): Promise<ApiResponse<boolean>> => {
+  return get('/captcha/sent', { phone, ctcode, nocache })
 }
 
 // 验证验证码
-export const verifyCaptcha = (phone: string, captcha: string, ctcode?: string): Promise<ApiResponse> => {
-  return get('/captcha/verify', { phone, captcha, ctcode })
+export const verifyCaptcha = (phone: string, captcha: string, ctcode?: string): Promise<ApiResponse<boolean>> => {
+  return get('/captcha/verify', { phone, captcha, ctcode, nocache })
 }
 
 // 二维码登录 - 获取key
 export const getQRKey = (): Promise<ApiResponse<{ unikey: string }>> => {
-  return get('/login/qr/key')
+  return get('/login/qr/key', { cookie: 'os=pc;', nocache })
 }
 
 // 二维码登录 - 生成二维码
 export const createQR = (key: string, qrimg = true): Promise<ApiResponse<{ qrurl: string; qrimg: string }>> => {
-  return get('/login/qr/create', { key, qrimg })
+  return get('/login/qr/create', { key, qrimg, nocache })
 }
 
 // 二维码登录 - 检测扫描状态
 export const checkQR = (key: string): Promise<ApiResponse<{ code: number; message?: string; cookie?: string }>> => {
-  return get('/login/qr/check', { key })
+  return get('/login/qr/check', { key, nocache })
 }
 
 // 刷新登录
 export const refreshLogin = (): Promise<ApiResponse> => {
-  return get('/login/refresh')
+  return get('/login/refresh', { nocache })
 }
 
 // 获取登录状态
 export const getLoginStatus = (): Promise<ApiResponse<{ profile: IUser; account: any }>> => {
-  return get('/login/status')
+  return get('/login/status', { nocache })
 }
 
 // 退出登录
 export const logout = (): Promise<ApiResponse> => {
-  return get('/logout')
+  return get('/logout', { nocache })
 }
 
 // ==================== 用户相关 ====================
@@ -81,22 +83,22 @@ export const getUserDetail = (uid: number): Promise<ApiResponse<{ profile: IUser
 
 // 获取用户信息
 export const getUserSubcount = (): Promise<ApiResponse> => {
-  return get('/user/subcount')
+  return get('/user/subcount', { nocache })
 }
 
 // 获取用户歌单
 export const getUserPlaylist = (uid: number, limit = 30, offset = 0): Promise<ApiResponse<{ playlist: IPlaylist[] }>> => {
-  return get('/user/playlist', { uid, limit, offset })
+  return get('/user/playlist', { uid, limit, offset, nocache })
 }
 
 // 获取用户播放记录
 export const getUserRecord = (uid: number, type = 0): Promise<ApiResponse<{ allData?: any[]; weekData?: any[] }>> => {
-  return get('/user/record', { uid, type })
+  return get('/user/record', { uid, type, nocache })
 }
 
 // 获取用户电台
 export const getUserDJ = (uid: number): Promise<ApiResponse> => {
-  return get('/user/dj', { uid })
+  return get('/user/dj', { uid, nocache })
 }
 
 // 更新用户信息
@@ -108,7 +110,7 @@ export const updateUserProfile = (data: {
   city?: number
   signature?: string
 }): Promise<ApiResponse> => {
-  return get('/user/update', data)
+  return get('/user/update', { ...data, nocache })
 }
 
 // ==================== 歌曲相关 ====================
@@ -143,17 +145,17 @@ export const getLyric = (id: number): Promise<ApiResponse<{ lrc?: { lyric: strin
 
 // 喜欢音乐
 export const likeSong = (id: number, like = true): Promise<ApiResponse> => {
-  return get('/like', { id, like })
+  return get('/like', { id, like, nocache })
 }
 
 // 获取喜欢音乐列表
 export const getLikeList = (uid: number): Promise<ApiResponse<{ ids: number[]; checkPoint: number }>> => {
-  return get('/likelist', { uid })
+  return get('/likelist', { uid, nocache })
 }
 
 // 获取相似音乐
 export const getSimiSong = (id: number): Promise<ApiResponse<{ songs: ISong[] }>> => {
-  return get('/simi/song', { id })
+  return get('/simi/song', { id, nocache })
 }
 
 // ==================== 歌单相关 ====================
@@ -197,30 +199,30 @@ export const getPlaylistHotCategories = (): Promise<ApiResponse<{ tags: { id: nu
 
 // 收藏/取消收藏歌单
 export const subscribePlaylist = (id: number, t: 1 | 2): Promise<ApiResponse> => {
-  return get('/playlist/subscribe', { id, t })
+  return get('/playlist/subscribe', { id, t, nocache })
 }
 
 // 新建歌单
 export const createPlaylist = (name: string, privacy?: 0 | 10, type?: 'NORMAL' | 'VIDEO' | 'SHARED'): Promise<ApiResponse> => {
-  return get('/playlist/create', { name, privacy, type })
+  return get('/playlist/create', { name, privacy, type, nocache })
 }
 
 // 删除歌单
 export const deletePlaylist = (id: number): Promise<ApiResponse> => {
-  return get('/playlist/delete', { id })
+  return get('/playlist/delete', { id, nocache })
 }
 
 // 对歌单添加或删除歌曲
 export const manipulatePlaylistTracks = (op: 'add' | 'del', pid: number, tracks: number | number[]): Promise<ApiResponse> => {
   const trackStr = Array.isArray(tracks) ? tracks.join(',') : tracks
-  return get('/playlist/tracks', { op, pid, tracks: trackStr })
+  return get('/playlist/tracks', { op, pid, tracks: trackStr, nocache })
 }
 
 // ==================== 搜索相关 ====================
 
 // 搜索
 export const search = (keywords: string, type = 1, limit = 30, offset = 0): Promise<ApiResponse> => {
-  return get('/search', { keywords, type, limit, offset })
+  return get('/search', { keywords, type, limit, offset, nocache })
 }
 
 // 获取默认搜索关键词
@@ -240,12 +242,12 @@ export const getHotSearchDetail = (): Promise<ApiResponse<{ searchWord: string; 
 
 // 获取搜索建议
 export const getSearchSuggest = (keywords: string, type = 'mobile'): Promise<ApiResponse<{ result: ISearchSuggest }>> => {
-  return get('/search/suggest', { keywords, type })
+  return get('/search/suggest', { keywords, type, nocache })
 }
 
 // 搜索多重匹配
 export const getSearchMultimatch = (keywords: string): Promise<ApiResponse> => {
-  return get('/search/multimatch', { keywords })
+  return get('/search/multimatch', { keywords, nocache })
 }
 
 // ==================== 推荐相关 ====================
@@ -272,12 +274,12 @@ export const getDailyRecommendSongs = (): Promise<ApiResponse<{ dailySongs: IDai
 
 // 获取私人FM，一般只有一首，播放完再次调用
 export const getPersonalFM = (): Promise<ApiResponse<ISong[]>> => {
-  return get('/personal_fm')
+  return get('/personal_fm', { nocache })
 }
 
 // 推荐新音乐
 export const getNewSongs = (limit = 10): Promise<ApiResponse<{ result: { id: number; name: string; picUrl: string; song: { artists: IArtist[]; album: IAlbum; duration: number } }[] }>> => {
-  return get('/personalized/newsong', { limit })
+  return get('/personalized/newsong', { limit, nocache })
 }
 
 // ==================== 歌手相关 ====================
@@ -319,12 +321,12 @@ export const getArtistList = (cat = 1001, limit = 30, offset = 0, initial?: stri
 
 // 收藏的歌手列表
 export const getSubArtists = (): Promise<ApiResponse<{ data: IArtist[]; hasMore: boolean; count: number }>> => {
-  return get('/artist/sublist')
+  return get('/artist/sublist', { nocache })
 }
 
 // 收藏/取消收藏歌手
 export const subscribeArtist = (id: number, t: 1 | 0): Promise<ApiResponse> => {
-  return get('/artist/sub', { id, t })
+  return get('/artist/sub', { id, t, nocache })
 }
 
 // ==================== 专辑相关 ====================
@@ -341,12 +343,12 @@ export const getNewAlbums = (limit = 20, offset = 0, area = 'ALL', type = 'new')
 
 // 收藏的专辑列表
 export const getSubAlbums = (limit = 25, offset = 0): Promise<ApiResponse<{ data: IAlbum[]; hasMore: boolean; count: number }>> => {
-  return get('/album/sublist', { limit, offset })
+  return get('/album/sublist', { limit, offset, nocache })
 }
 
 // 收藏/取消收藏专辑
 export const subscribeAlbum = (id: number, t: 1 | 0): Promise<ApiResponse> => {
-  return get('/album/sub', { id, t })
+  return get('/album/sub', { id, t , nocache })
 }
 
 // ==================== 排行榜相关 ====================
@@ -435,7 +437,7 @@ export const getHotComments = (id: number, type: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0, 
 
 // 签到
 export const dailySignin = (type = 0): Promise<ApiResponse> => {
-  return get('/daily_signin', { type })
+  return get('/daily_signin', { type, nocache })
 }
 
 // 获取首页轮播图
@@ -533,7 +535,7 @@ export const likeComment = (
   cid: number,
   type: 0 | 2 | 3
 ): Promise<ApiResponse> => 
-  get('/comment/like', { id, cid, t: 1, type })
+  get('/comment/like', { id, cid, t: 1, type, nocache })
 
 /**
  * 取消点赞评论
@@ -546,7 +548,7 @@ export const unlikeComment = (
   cid: number,
   type: 0 | 2 | 3
 ): Promise<ApiResponse> => 
-  get('/comment/like', { id, cid, t: 0, type })
+  get('/comment/like', { id, cid, t: 0, type, nocache })
 
 /**
  * 发送评论
@@ -559,7 +561,7 @@ export const sendComment = (
   type: 0 | 2 | 3,
   content: string
 ): Promise<ApiResponse> => 
-  get('/comment', { id, type, t: 1, content })
+  get('/comment', { id, type, t: 1, content, nocache })
 
 /**
  * 回复评论
@@ -574,7 +576,7 @@ export const replyComment = (
   content: string,
   commentId: number
 ): Promise<ApiResponse> => 
-  get('/comment', { id, type, t: 2, content, commentId })
+  get('/comment', { id, type, t: 2, content, commentId, nocache })
 
 /**
  * 删除评论
@@ -587,7 +589,7 @@ export const deleteComment = (
   type: 0 | 2 | 3,
   commentId: number
 ): Promise<ApiResponse> => 
-  get('/comment', { id, type, t: 0, commentId })
+  get('/comment', { id, type, t: 0, commentId, nocache })
 
 export const getAllTopLists = () =>
   get<{ list: IToplist[] }>('/toplist');

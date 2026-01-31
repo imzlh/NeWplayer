@@ -33,6 +33,15 @@
           {{ playerStore.currentSong?.artists?.map(a => a.name).join(' / ') || '选择一首歌曲开始播放' }}
         </p>
       </div>
+      <button 
+        class="like-btn header-like-btn"
+        :class="{ 'liked': isLiked }"
+        @click="toggleLike"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </button>
       <button class="header-btn" @click="showMore">
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
           <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
@@ -98,25 +107,6 @@
     
     <!-- 底部控制区域 -->
     <footer class="player-footer">
-      <!-- 歌曲信息 -->
-      <div class="song-info">
-        <div class="info-left">
-          <h3 class="song-name text-ellipsis">{{ playerStore.currentSong?.name || '未在播放' }}</h3>
-          <p class="song-artist text-ellipsis">
-            {{ playerStore.currentSong?.artists?.map(a => a.name).join(' / ') || '-' }}
-          </p>
-        </div>
-        <button
-          class="like-btn"
-          :class="{ 'liked': isLiked }"
-          @click="toggleLike"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </button>
-      </div>
-      
       <!-- 进度条 -->
       <div class="progress-area">
         <span class="time-current">{{ formatTime(playerStore.progress) }}</span>
@@ -177,14 +167,16 @@
         <!-- 普通模式的控制按钮 -->
         <template v-else>
           <button class="control-btn btn-mode" @click="playerStore.togglePlayMode">
-            <svg v-if="playerStore.playMode === 0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 12h16M4 12l4-4m-4 4l4 4"/>
+            <svg v-if="playerStore.playMode === PlayMode.Random" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.624 9.624 0 0 0 7.556 8a9.624 9.624 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.595 10.595 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.624 9.624 0 0 0 6.444 8a9.624 9.624 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5z"/>
+              <path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192zm0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192z"/>
             </svg>
-            <svg v-else-if="playerStore.playMode === 1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M16 3h3v3h-3zM8 3h3v3H8zM5 8h14v12H5z"/>
+            <svg v-else-if="playerStore.playMode === PlayMode.Sequence" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z"/>
             </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 2.1l4 4-4 4M3 12.2v-2l11 .1M7 21.9l-4-4 4-4"/>
+            <svg v-else <svg fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+              <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
             </svg>
           </button>
           
@@ -290,6 +282,7 @@ import { showAction } from '@/stores/action'
 import { getSongUrl } from '@/api'
 import { svg } from '@/utils/svg'
 import router from '@/router'
+import { PlayMode } from '@/types'
 
 const emit = defineEmits<{
   close: []
@@ -570,7 +563,7 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: blur(60px) brightness(0.4);
+    filter: blur(3.75rem /* 60px */) brightness(0.4);
     transform: scale(1.2);
   }
   
@@ -594,13 +587,13 @@ onMounted(() => {
 
 .header-btn {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 2.5rem; // 2.5rem /* 40px */
+  height: 2.5rem; // 2.5rem /* 40px */
   @include flex-center;
   color: white;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem /* 10px */);
   transition: all $transition-fast $ease-default;
   
   &:active {
@@ -608,13 +601,14 @@ onMounted(() => {
   }
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem; // 1.25rem /* 20px */
+    height: 1.25rem; // 1.25rem /* 20px */
   }
 }
 
 .header-info {
   flex: 1;
+  overflow: hidden;
   text-align: center;
   padding: 0 $spacing-md;
 }
@@ -623,12 +617,12 @@ onMounted(() => {
   font-size: $font-md;
   font-weight: 500;
   color: white;
-  margin-bottom: 2px;
+  margin-bottom: 0.125rem; // 0.125rem /* 2px */
 }
 
 .fm-badge {
   font-size: $font-xs;
-  padding: 2px 8px;
+  padding: 0.125rem 0.5rem; // 0.125rem /* 2px */ 0.5rem /* 8px */
   background: $gradient-primary;
   color: white;
   border-radius: $radius-full;
@@ -675,23 +669,23 @@ onMounted(() => {
   position: relative;
   width: 80vw;
   height: 80vw;
-  max-width: 320px;
-  max-height: 320px;
+  max-width: 20rem; // 20rem /* 320px */
+  max-height: 20rem; // 20rem /* 320px */
 }
 
 .album-card {
   width: 100%;
   height: 100%;
-  border-radius: 20px;
+  border-radius: 1.25rem; // 1.25rem /* 20px */
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.3); // 0 1.25rem /* 20px */ 2.5rem /* 40px */
   background: $bg-card;
   transition: all $transition-normal $ease-default;
   box-sizing: border-box;
   
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    transform: translateY(-0.3125rem); // -0.25rem /* 5px */
+    box-shadow: 0 1.5625rem 3.125rem rgba(0, 0, 0, 0.4); // 0 1.5rem /* 25px */ 3.125rem /* 50px */
   }
 }
 
@@ -710,9 +704,9 @@ onMounted(() => {
   background: $bg-card;
   
   svg {
-    width: 60px;
-    height: 60px;
-  }
+      width: 3.75rem; // 3.75rem /* 60px */
+      height: 3.75rem; // 3.75rem /* 60px */
+    }
 }
 
 .lyric-hint {
@@ -764,7 +758,7 @@ onMounted(() => {
   display: block;
   font-size: $font-xs;
   color: rgba(255, 255, 255, 0.4);
-  margin-top: 2px;
+  margin-top: 0.125rem; // 0.125rem /* 2px */
 }
 
 .player-footer {
@@ -772,23 +766,18 @@ onMounted(() => {
   padding-bottom: calc(#{$spacing-lg} + env(safe-area-inset-bottom));
 }
 
-.song-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacing-md;
-}
-
-.info-left {
-  flex: 1;
-  min-width: 0;
+.info-title {
+  font-size: $font-lg;
+  font-weight: 500;
+  color: $text-primary;
+  margin-bottom: 0.25rem; // 0.25rem /* 4px */
 }
 
 .song-name {
   font-size: $font-xl;
   font-weight: 600;
   color: white;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem; // 0.25rem /* 4px */
 }
 
 .song-artist {
@@ -797,8 +786,8 @@ onMounted(() => {
 }
 
 .like-btn {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem /* 40px */;
+  height: 2.5rem /* 40px */;
   @include flex-center;
   color: rgba(255, 255, 255, 0.6);
   transition: all $transition-fast $ease-default;
@@ -807,10 +796,28 @@ onMounted(() => {
     color: $primary-color;
   }
   
-  svg {
-    width: 24px;
-    height: 24px;
+  &.header-like-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    margin-right: $spacing-sm;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    &.liked {
+      background: rgba($primary-color, 0.2);
+      
+      &:hover {
+        background: rgba($primary-color, 0.3);
+      }
+    }
   }
+  
+  svg {
+      width: 1.5rem; // 1.5rem /* 24px */
+      height: 1.5rem; // 1.5rem /* 24px */
+    }
 }
 
 .progress-area {
@@ -822,9 +829,9 @@ onMounted(() => {
 
 .time-current,
 .time-total {
-  font-size: 10px;
+  font-size: 0.625rem; // 0.625rem /* 10px */
   color: rgba(255, 255, 255, 0.6);
-  min-width: 36px;
+  min-width: 2.25rem; // 2.25rem /* 36px */
 }
 
 .time-current {
@@ -837,7 +844,7 @@ onMounted(() => {
 
 .progress-bar {
   flex: 1;
-  height: 20px;
+  height: 1.25rem; // 1.25rem /* 20px */
   display: flex;
   align-items: center;
   position: relative;
@@ -846,7 +853,7 @@ onMounted(() => {
 
 .progress-track {
   width: 100%;
-  height: 3px;
+  height: 0.1875rem; // 0.25rem /* 3px */
   background: rgba(255, 255, 255, 0.2);
   border-radius: $radius-full;
   overflow: hidden;
@@ -863,11 +870,11 @@ onMounted(() => {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
+  width: 0.75rem; // 0.75rem /* 12px */
+  height: 0.75rem; // 0.75rem /* 12px */
   background: white;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3); // 0 0.125rem /* 2px */ 0.25rem /* 4px */
   transition: left $transition-fast linear;
 }
 
@@ -887,13 +894,13 @@ onMounted(() => {
   }
   
   svg {
-    width: 24px;
-    height: 24px;
-  }
+      width: 1.5rem; // 1.5rem /* 24px */
+      height: 1.5rem; // 1.5rem /* 24px */
+    }
 
   &.lg svg {
-    width: 32px;
-    height: 32px;
+    width: 2rem; // 2rem /* 32px */
+    height: 2rem; // 2rem /* 32px */
   }
   
   &.btn-trash {
@@ -906,32 +913,32 @@ onMounted(() => {
   
   &.btn-mode,
   &.btn-list {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem; // 2.5rem /* 40px */
+    height: 2.5rem; // 2.5rem /* 40px */
     opacity: 0.7;
   }
   
   &.btn-prev,
   &.btn-next {
-    width: 50px;
-    height: 50px;
+    width: 3.125rem; // 3.125rem /* 50px */
+    height: 3.125rem; // 3.125rem /* 50px */
     
     svg {
-      width: 32px;
-      height: 32px;
+      width: 2rem; // 2rem /* 32px */
+      height: 2rem; // 2rem /* 32px */
     }
   }
   
   &.btn-play {
-    width: 64px;
-    height: 64px;
+    width: 4rem /* 64px */;
+    height: 4rem /* 64px */;
     background: $gradient-primary;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba($primary-color, 0.4);
+    box-shadow: 0 0.25rem /* 4px */ 1rem /* 15px */ rgba($primary-color, 0.4);
     
     svg {
-      width: 28px;
-      height: 28px;
+      width: 1.75rem /* 28px */;
+      height: 1.75rem /* 28px */;
     }
     
     &.btn-loading {
@@ -948,7 +955,7 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem /* 10px */);
   z-index: $z-modal;
   display: flex;
   align-items: flex-end;
@@ -969,7 +976,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
   
   h3 {
     font-size: $font-md;
@@ -986,8 +993,8 @@ onMounted(() => {
   color: $text-tertiary;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem /* 16px */;
+    height: 1rem /* 16px */;
   }
 }
 
@@ -1024,7 +1031,7 @@ onMounted(() => {
 .item-name {
   font-size: $font-sm;
   color: $text-primary;
-  margin-bottom: 2px;
+  margin-bottom: 0.125rem /* 2px */;
 }
 
 .item-artist {
@@ -1033,14 +1040,14 @@ onMounted(() => {
 }
 
 .item-remove {
-  width: 32px;
-  height: 32px;
+  width: 2rem /* 32px */;
+  height: 2rem /* 32px */;
   @include flex-center;
   color: $text-muted;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem /* 16px */;
+    height: 1rem /* 16px */;
   }
 }
 

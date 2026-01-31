@@ -81,13 +81,13 @@ const handleNavClick = (item: NavItem) => {
   transform: translateX(-50%);
   width: 100%;
   max-width: $screen-width;
-  height: 56px;
+  height: 3.5rem; // 3.5rem /* 56px */
   display: flex;
   align-items: center;
   justify-content: space-around;
   background: rgba($bg-secondary, 0.95);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid $border-color;
+  backdrop-filter: blur(1.25rem /* 20px */);
+  border-top: 0.125rem /* 1px */ solid $border-color;
   z-index: $z-sticky;
   transition: transform $transition-normal $ease-default;
   
@@ -101,7 +101,7 @@ const handleNavClick = (item: NavItem) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
   padding: $spacing-sm $spacing-md;
   color: $text-tertiary;
   transition: all $transition-fast $ease-default;
@@ -117,8 +117,8 @@ const handleNavClick = (item: NavItem) => {
 }
 
 .nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem; // 1.5rem /* 24px */
+  height: 1.5rem; // 1.5rem /* 24px */
   transition: transform $transition-fast $ease-default;
 }
 

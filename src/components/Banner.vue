@@ -233,9 +233,9 @@ onUnmounted(() => {
   position: absolute;
   bottom: $spacing-sm;
   right: $spacing-sm;
-  padding: 2px 8px;
+  padding: 0.125rem /* 2px */ 0.5rem /* 8px */;
   border-radius: $radius-sm;
-  font-size: 10px;
+  font-size: 0.625rem /* 10px */;
   color: white;
   font-weight: 500;
 }
@@ -246,19 +246,19 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 6px;
+  gap: 0.375rem /* 6px */;
 }
 
 .indicator-dot {
-  width: 6px;
-  height: 6px;
+  width: 0.375rem /* 6px */;
+  height: 0.375rem /* 6px */;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: all $transition-fast $ease-default;
   
   &.dot-active {
-    width: 16px;
+    width: 1rem /* 16px */;
     border-radius: $radius-full;
     background: $primary-color;
   }

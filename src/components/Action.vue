@@ -10,7 +10,10 @@
           <div v-if="title" class="action-sheet-title">{{ title }}</div>
           <div v-if="description" class="action-sheet-description">{{ description }}</div>
 
-          <div class="action-sheet-options">
+          <!-- prevent: stop drag event to trigger click event -->
+          <div class="action-sheet-options"
+            @touchstart.stop @mousedown.stop @touchmove.stop @touchend.stop @mouseup.stop @mousemove.stop
+          >
             <button v-for="(option, index) in options" :key="option.key ?? index" class="action-option"
               :class="getOptionClass(option)" @click="handleOptionClick(option)" :disabled="option.disabled">
               <span v-if="option.icon" class="option-icon" v-html="option.icon"></span>
@@ -240,7 +243,7 @@ $bg-card-inner: #575d6c;
   max-width: $screen-width;
   background: $bg-card;
   border-radius: $radius-lg $radius-lg 0 0;
-  padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
+  padding: 0.5rem /* 8px */ 0.5rem /* 8px */ calc(env(safe-area-inset-bottom) + 0.5rem /* 8px */);
   max-height: 80vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -251,11 +254,11 @@ $bg-card-inner: #575d6c;
 }
 
 .drag-indicator {
-  width: 36px;
-  height: 5px;
+  width: 2.25rem /* 36px */;
+  height: 0.25rem /* 5px */;
   background: rgb(198, 198, 198);
   border-radius: $radius-sm;
-  margin: 8px auto 12px;
+  margin: 0.5rem /* 8px */ auto 0.75rem /* 12px */;
   flex-shrink: 0;
 }
 
@@ -280,6 +283,7 @@ $bg-card-inner: #575d6c;
   border-radius: $radius-md;
   overflow: hidden;
   margin-bottom: $spacing-sm;
+  overflow-y: auto;
 }
 
 .action-option {
@@ -289,7 +293,7 @@ $bg-card-inner: #575d6c;
   color: white;
   background: $bg-card-inner;
   border: none;
-  border-bottom: 1px solid $border-light;
+  border-bottom: 0.125rem /* 1px */ solid $border-light;
   cursor: pointer;
   transition: background $transition-fast $ease-default;
   text-align: center;
@@ -297,7 +301,7 @@ $bg-card-inner: #575d6c;
   align-items: center;
   gap: $spacing-xl;
   padding-left: $spacing-xl;
-  min-height: 56px;
+  min-height: 3.5rem /* 56px */;
 
   &:last-child {
     border-bottom: none;
@@ -319,12 +323,12 @@ $bg-card-inner: #575d6c;
 }
 
 .option-icon {
-  font-size: 20px;
+  font-size: 1.25rem /* 20px */;
   line-height: 1;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
     fill: currentColor;
   }
 }
@@ -344,7 +348,7 @@ $bg-card-inner: #575d6c;
   border-radius: $radius-md;
   cursor: pointer;
   transition: background $transition-fast $ease-default;
-  min-height: 56px;
+  min-height: 3.5rem /* 56px */;
 
   &:active {
     background: $bg-hover;

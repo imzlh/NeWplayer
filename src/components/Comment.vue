@@ -276,7 +276,7 @@ onMounted(() => fetchComments(true))
 
 .comment-list {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
   background: $bg-primary;
   position: fixed;
   top: 0;
@@ -300,50 +300,50 @@ onMounted(() => fetchComments(true))
   z-index: $z-sticky;
   transition: all $transition-normal $ease-default;
   background: rgba($bg-primary, 0.95);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(1.25rem /* 20px */);
+  box-shadow: 0 0.125rem /* 2px */ 0.5rem /* 8px */ rgba(0, 0, 0, 0.1);
 }
 
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: $text-primary;
   border-radius: 50%;
   background: rgba($text-primary, 0.1);
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
 .content {
   height: 100vh;
   overflow-y: auto;
-  padding-top: 60px;
+  padding-top: 3.75rem /* 60px */;
 }
 
 .tab-section {
   display: flex;
   gap: $spacing-md;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .tab-item {
   flex: 1;
-  width: 160px;
+  width: 10rem /* 160px */;
   padding: $spacing-sm;
   font-size: $font-sm;
   font-weight: 500;
   color: $text-secondary;
-  border-bottom: 2px solid transparent;
+  border-bottom: 0.125rem /* 2px */ solid transparent;
   transition: all $transition-fast $ease-default;
 
   .count {
     font-size: $font-xs;
     color: $text-tertiary;
-    margin-left: 4px;
+    margin-left: 0.25rem /* 4px */;
   }
 
   &.active {
@@ -371,8 +371,8 @@ onMounted(() => fetchComments(true))
   color: $text-tertiary;
 
   svg {
-    width: 64px;
-    height: 64px;
+    width: 4rem /* 64px */;
+    height: 4rem /* 64px */;
     margin-bottom: $spacing-md;
     opacity: 0.3;
   }
@@ -394,8 +394,8 @@ onMounted(() => fetchComments(true))
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem /* 40px */;
+  height: 2.5rem /* 40px */;
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
@@ -464,7 +464,7 @@ onMounted(() => fetchComments(true))
 .reply-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem /* 4px */;
   padding: $spacing-xs $spacing-sm;
   font-size: $font-xs;
   color: $text-tertiary;
@@ -472,8 +472,8 @@ onMounted(() => fetchComments(true))
   transition: all $transition-fast $ease-default;
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem /* 16px */;
+    height: 1rem /* 16px */;
   }
 
   &:hover {
@@ -486,7 +486,7 @@ onMounted(() => fetchComments(true))
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 
 // slide-up动画

@@ -102,7 +102,7 @@ fetchToplists()
 
 .toplist-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
   background: $bg-primary;
 }
 
@@ -122,22 +122,22 @@ fetchToplists()
 
   &.scrolled {
     background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(1.25rem /* 20px */);
+    box-shadow: 0 0.125rem /* 2px */ 0.5rem /* 8px */ rgba(0, 0, 0, 0.1);
   }
 }
 
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: $text-primary;
   border-radius: 50%;
   background: rgba($text-primary, 0.1);
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -154,22 +154,22 @@ fetchToplists()
 }
 
 .placeholder {
-  width: 36px;
+  width: 2.25rem /* 36px */;
 }
 
 .content {
   height: 100vh;
   overflow-y: auto;
-  padding-top: 60px;
+  padding-top: 3.75rem /* 60px */;
 }
 
 .category-section {
   position: sticky;
-  top: 60px;
+  top: 3.75rem /* 60px */;
   background: $bg-primary;
   z-index: $z-fixed;
   padding: $spacing-sm 0;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .category-scroll {
@@ -241,16 +241,16 @@ fetchToplists()
     right: $spacing-xs;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px $spacing-xs;
+    gap: 0.25rem /* 4px */;
+    padding: 0.25rem /* 4px */ $spacing-xs;
     background: rgba(0, 0, 0, 0.6);
     border-radius: $radius-full;
     font-size: $font-xs;
     color: white;
     
     svg {
-      width: 12px;
-      height: 12px;
+      width: 0.75rem /* 12px */;
+      height: 0.75rem /* 12px */;
     }
   }
 }
@@ -262,7 +262,7 @@ fetchToplists()
     font-size: $font-sm;
     font-weight: 600;
     color: $text-primary;
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem /* 4px */;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -278,6 +278,6 @@ fetchToplists()
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 </style>

@@ -63,7 +63,7 @@ const handleOverlayClick = () => {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem /* 10px */);
   z-index: $z-modal;
   @include flex-center;
   padding: $spacing-lg;
@@ -80,15 +80,15 @@ const handleOverlayClick = () => {
   animation: scaleIn $transition-normal $ease-bounce;
   
   &.modal-small {
-    max-width: 280px;
+    max-width: 17.5rem /* 280px */;
   }
   
   &.modal-medium {
-    max-width: 340px;
+    max-width: 21.25rem /* 340px */;
   }
   
   &.modal-large {
-    max-width: 380px;
+    max-width: 23.75rem /* 380px */;
   }
 }
 
@@ -97,7 +97,7 @@ const handleOverlayClick = () => {
   align-items: center;
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .modal-title {
@@ -107,8 +107,8 @@ const handleOverlayClick = () => {
 }
 
 .modal-close {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem /* 28px */;
+  height: 1.75rem /* 28px */;
   @include flex-center;
   color: $text-tertiary;
   border-radius: 50%;
@@ -120,8 +120,8 @@ const handleOverlayClick = () => {
   }
   
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
 }
 
@@ -134,7 +134,7 @@ const handleOverlayClick = () => {
 
 .modal-footer {
   padding: $spacing-md $spacing-lg;
-  border-top: 1px solid $border-color;
+  border-top: 0.125rem /* 1px */ solid $border-color;
   display: flex;
   justify-content: flex-end;
   gap: $spacing-sm;

@@ -20,7 +20,7 @@
         <Banner :banners="banners" @click="handleBannerClick" />
       </section>
       <section class="section-banner skeleton-banner" v-else>
-        <Skeleton width="100%" height="140px" radius="12px" />
+        <Skeleton width="100%" height="8.75rem /* 140px */" radius="0.75rem /* 12px */" />
       </section>
 
       <!-- 快捷入口 -->
@@ -54,7 +54,7 @@
           </button>
         </div>
         <div v-if="loading.recommend" class="playlists-grid">
-          <Skeleton v-for="i in 6" :key="i" width="100%" aspect-ratio="1" radius="12px" />
+          <Skeleton v-for="i in 6" :key="i" width="100%" aspect-ratio="1" radius="0.75rem /* 12px */" />
         </div>
         <div v-else class="playlists-grid">
           <PlaylistCard v-for="playlist in recommendPlaylists" :key="playlist.id" :playlist="playlist"
@@ -75,10 +75,10 @@
         </div>
         <div v-if="loading.newSongs" class="songs-list">
           <div v-for="i in 5" :key="i" class="song-skeleton">
-            <Skeleton width="48px" height="48px" radius="8px" />
+            <Skeleton width="3rem /* 48px */" height="3rem /* 48px */" radius="0.5rem /* 8px */" />
             <div class="skeleton-info">
-              <Skeleton width="60%" height="16px" />
-              <Skeleton width="40%" height="12px" />
+              <Skeleton width="60%" height="1rem /* 16px */" />
+              <Skeleton width="40%" height="0.75rem /* 12px */" />
             </div>
           </div>
         </div>
@@ -102,7 +102,7 @@
           </button>
         </div>
         <div v-if="loading.artists" class="artists-scroll">
-          <Skeleton v-for="i in 8" :key="i" width="64px" height="64px" circle />
+          <Skeleton v-for="i in 8" :key="i" width="4rem /* 64px */" height="4rem /* 64px */" circle />
         </div>
         <div v-else class="artists-scroll">
           <div v-for="artist in hotArtists" :key="artist.id" class="artist-item" @click="goToArtist(artist.id)">
@@ -322,7 +322,7 @@ onMounted(() => {
 
 .home-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .home-header {
@@ -334,7 +334,7 @@ onMounted(() => {
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
   background: rgba($bg-primary, 0.95);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(1.25rem /* 20px */);
 }
 
 .header-logo {
@@ -346,14 +346,14 @@ onMounted(() => {
   color: $primary-color;
 
   svg {
-    width: 28px;
-    height: 28px;
+    width: 1.75rem /* 28px */;
+    height: 1.75rem /* 28px */;
   }
 }
 
 .header-search {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: $text-secondary;
   border-radius: 50%;
@@ -365,8 +365,8 @@ onMounted(() => {
   }
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
 }
 
@@ -400,15 +400,15 @@ onMounted(() => {
 }
 
 .shortcut-icon {
-  width: 64px;
-  height: 64px;
+  width: 4rem /* 64px */;
+  height: 4rem /* 64px */;
   @include flex-center;
   border-radius: 50%;
   color: white;
 
   svg {
-    width: 42px;
-    height: 42px;
+    width: 2.625rem /* 42px */;
+    height: 2.625rem /* 42px */;
   }
 }
 
@@ -433,7 +433,7 @@ onMounted(() => {
 .section-more {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
   font-size: $font-sm;
   color: $text-tertiary;
   transition: color $transition-fast $ease-default;
@@ -443,8 +443,8 @@ onMounted(() => {
   }
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 0.875rem /* 14px */;
+    height: 0.875rem /* 14px */;
   }
 }
 
@@ -465,7 +465,7 @@ onMounted(() => {
 .songs-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .song-skeleton {
@@ -509,8 +509,8 @@ onMounted(() => {
 }
 
 .artist-avatar {
-  width: 64px;
-  height: 64px;
+  width: 4rem /* 64px */;
+  height: 4rem /* 64px */;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -518,10 +518,10 @@ onMounted(() => {
 .artist-name {
   font-size: $font-xs;
   color: $text-secondary;
-  max-width: 64px;
+  max-width: 4rem /* 64px */;
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 </style>

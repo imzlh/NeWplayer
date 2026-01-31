@@ -213,7 +213,7 @@ onMounted(fetchArtist)
 
 .artist-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .artist-header {
@@ -232,22 +232,22 @@ onMounted(fetchArtist)
   
   &.header-scrolled {
     background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(1.25rem /* 20px */);
   }
 }
 
 .header-back {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: white;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem /* 10px */);
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -258,7 +258,7 @@ onMounted(fetchArtist)
   opacity: 0;
   transition: opacity $transition-normal $ease-default;
   @include text-ellipsis;
-  max-width: 200px;
+  max-width: 12.5rem /* 200px */;
   
   &.title-visible {
     opacity: 1;
@@ -266,7 +266,7 @@ onMounted(fetchArtist)
 }
 
 .header-placeholder {
-  width: 36px;
+  width: 2.25rem /* 36px */;
 }
 
 .artist-content {
@@ -275,7 +275,7 @@ onMounted(fetchArtist)
 
 .artist-info {
   position: relative;
-  padding: 80px $spacing-lg $spacing-lg;
+  padding: 5rem /* 80px */ $spacing-lg $spacing-lg;
   background: linear-gradient(180deg, rgba($primary-color, 0.3) 0%, $bg-primary 100%);
   display: flex;
   flex-direction: column;
@@ -284,8 +284,8 @@ onMounted(fetchArtist)
 }
 
 .info-cover {
-  width: 120px;
-  height: 120px;
+  width: 7.5rem /* 120px */;
+  height: 7.5rem /* 120px */;
   border-radius: 50%;
   overflow: hidden;
   margin-bottom: $spacing-md;
@@ -308,14 +308,14 @@ onMounted(fetchArtist)
 .info-desc {
   font-size: $font-sm;
   color: $text-tertiary;
-  max-width: 280px;
+  max-width: 17.5rem /* 280px */;
 }
 
 .artist-actions {
   display: flex;
   gap: $spacing-md;
   padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .action-btn {
@@ -331,8 +331,8 @@ onMounted(fetchArtist)
   transition: all $transition-fast $ease-default;
   
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
   
   &.action-follow {
@@ -354,7 +354,7 @@ onMounted(fetchArtist)
   display: flex;
   gap: $spacing-lg;
   padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .tab-item {
@@ -371,10 +371,10 @@ onMounted(fetchArtist)
     &::after {
       content: '';
       position: absolute;
-      bottom: -1px;
+      bottom: -0.125rem /* 1px */;
       left: 0;
       right: 0;
-      height: 2px;
+      height: 0.125rem /* 2px */;
       background: $primary-color;
       border-radius: $radius-full;
     }
@@ -392,7 +392,7 @@ onMounted(fetchArtist)
 .songs-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .albums-grid {
@@ -422,11 +422,11 @@ onMounted(fetchArtist)
 }
 
 .album-time {
-  font-size: 10px;
+  font-size: 0.625rem /* 10px */;
   color: $text-muted;
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 </style>

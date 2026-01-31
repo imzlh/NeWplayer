@@ -178,7 +178,7 @@ onMounted(fetchAlbum)
 
 .album-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .album-header {
@@ -197,22 +197,22 @@ onMounted(fetchAlbum)
   
   &.header-scrolled {
     background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(1.25rem /* 20px */);
   }
 }
 
 .header-back {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: white;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem /* 10px */);
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -223,7 +223,7 @@ onMounted(fetchAlbum)
   opacity: 0;
   transition: opacity $transition-normal $ease-default;
   @include text-ellipsis;
-  max-width: 200px;
+  max-width: 12.5rem /* 200px */;
   
   &.title-visible {
     opacity: 1;
@@ -231,7 +231,7 @@ onMounted(fetchAlbum)
 }
 
 .header-placeholder {
-  width: 36px;
+  width: 2.25rem /* 36px */;
 }
 
 .album-content {
@@ -240,15 +240,15 @@ onMounted(fetchAlbum)
 
 .album-info {
   position: relative;
-  padding: 80px $spacing-lg $spacing-lg;
+  padding: 5rem /* 80px */ $spacing-lg $spacing-lg;
   background: linear-gradient(180deg, rgba($primary-color, 0.3) 0%, $bg-primary 100%);
   display: flex;
   gap: $spacing-md;
 }
 
 .info-cover {
-  width: 120px;
-  height: 120px;
+  width: 7.5rem /* 120px */;
+  height: 7.5rem /* 120px */;
   border-radius: $radius-lg;
   overflow: hidden;
   flex-shrink: 0;
@@ -283,8 +283,8 @@ onMounted(fetchAlbum)
 }
 
 .artist-avatar {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem /* 24px */;
+  height: 1.5rem /* 24px */;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -303,7 +303,7 @@ onMounted(fetchAlbum)
   display: flex;
   gap: $spacing-md;
   padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .action-btn {
@@ -319,8 +319,8 @@ onMounted(fetchAlbum)
   transition: all $transition-fast $ease-default;
   
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
   
   &.action-playall {
@@ -358,10 +358,10 @@ onMounted(fetchAlbum)
 .songs-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 </style>

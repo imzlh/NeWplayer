@@ -131,16 +131,16 @@ const handleMoreClick = (event: MouseEvent) => {
 }
 
 .song-index {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem /* 28px */;
+  height: 1.75rem /* 28px */;
   @include flex-center;
   flex-shrink: 0;
 }
 
 .song-checkbox {
-  width: 20px;
-  height: 20px;
-  border: 2px solid $border-color;
+  width: 1.25rem /* 20px */;
+  height: 1.25rem /* 20px */;
+  border: 0.125rem /* 2px */ solid $border-color;
   border-radius: $radius-sm;
   @include flex-center;
   transition: all $transition-fast $ease-default;
@@ -150,8 +150,8 @@ const handleMoreClick = (event: MouseEvent) => {
     border-color: $primary-color;
     
     svg {
-      width: 14px;
-      height: 14px;
+      width: 0.875rem /* 14px */;
+      height: 0.875rem /* 14px */;
       color: white;
     }
   }
@@ -166,27 +166,27 @@ const handleMoreClick = (event: MouseEvent) => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 2px;
-  height: 16px;
+  gap: 0.125rem /* 2px */;
+  height: 1rem /* 16px */;
   
   span {
-    width: 3px;
+    width: 0.25rem /* 3px */;
     background: $primary-color;
     border-radius: $radius-sm;
     animation: sound-wave 0.8s ease-in-out infinite;
     
     &:nth-child(1) {
-      height: 8px;
+      height: 0.5rem /* 8px */;
       animation-delay: 0s;
     }
     
     &:nth-child(2) {
-      height: 14px;
+      height: 0.875rem /* 14px */;
       animation-delay: 0.2s;
     }
     
     &:nth-child(3) {
-      height: 10px;
+      height: 0.625rem /* 10px */;
       animation-delay: 0.4s;
     }
   }
@@ -206,7 +206,7 @@ const handleMoreClick = (event: MouseEvent) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .info-name {
@@ -219,8 +219,8 @@ const handleMoreClick = (event: MouseEvent) => {
 }
 
 .vip-tag {
-  font-size: 9px;
-  padding: 1px 4px;
+  font-size: 0.5rem /* 9px */;
+  padding: 0.125rem /* 1px */ 0.25rem /* 4px */;
   background: $warning-color;
   color: $bg-primary;
   border-radius: $radius-sm;
@@ -238,13 +238,13 @@ const handleMoreClick = (event: MouseEvent) => {
 }
 
 .artist-split {
-  margin: 0 4px;
+  margin: 0 0.25rem /* 4px */;
   color: $text-muted;
 }
 
 .song-more {
-  width: 32px;
-  height: 32px;
+  width: 2rem /* 32px */;
+  height: 2rem /* 32px */;
   @include flex-center;
   color: $text-tertiary;
   border-radius: 50%;
@@ -256,8 +256,8 @@ const handleMoreClick = (event: MouseEvent) => {
   }
   
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
 }
 </style>

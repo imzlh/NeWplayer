@@ -84,7 +84,7 @@
             :key="tab.type"
             class="tab-item"
             :class="{ 'tab-active': currentTab === tab.type }"
-            @click="currentTab = tab.type"
+            @click="switchTab(tab.type)"
           >
             {{ tab.name }}
           </button>
@@ -219,7 +219,9 @@ const hasSearched = ref(false)
 const showSuggestions = ref(false)
 const loading = ref(false)
 const loadingMore = ref(false)
-const currentTab = ref(1)
+
+// 从URL参数中获取tab状态
+const currentTab = ref(Number(route.query.tab as string) || 1)
 const offset = ref(0)
 const limit = 30
 
@@ -456,9 +458,32 @@ watch(() => [route.params.wd, route.params.type], ([wd, type]) => {
         currentTab.value = typeNum
       }
     }
+    
+    if (hasSearched.value) {
+      performSearch()
+    }
+  }
+})
+
+// 切换tab
+const switchTab = (tabType: number) => {
+  currentTab.value = tabType
+  
+  // 更新URL参数
+  router.replace({
+    name: 'SearchWithParams',
+    params: {
+      wd: encodeURIComponent(searchKeyword.value.trim()),
+      type: tabType.toString()
+    }
+  })
+  
+  // 如果已经搜索过，重新执行搜索
+  if (hasSearched.value) {
+    offset.value = 0
     performSearch()
   }
-}, { immediate: true })
+}
 
 onMounted(() => {
   fetchDefaultKeyword()
@@ -484,7 +509,7 @@ onMounted(() => {
 
 .search-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .search-header {
@@ -496,12 +521,12 @@ onMounted(() => {
   gap: $spacing-sm;
   padding: $spacing-md $spacing-lg;
   background: rgba($bg-primary, 0.95);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(1.25rem /* 20px */);
 }
 
 .header-back {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: $text-secondary;
   border-radius: 50%;
@@ -513,8 +538,8 @@ onMounted(() => {
   }
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -529,8 +554,8 @@ onMounted(() => {
 }
 
 .search-icon {
-  width: 16px;
-  height: 16px;
+  width: 1rem /* 16px */;
+  height: 1rem /* 16px */;
   color: $text-muted;
   flex-shrink: 0;
 }
@@ -549,8 +574,8 @@ onMounted(() => {
 }
 
 .clear-btn {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem /* 18px */;
+  height: 1.125rem /* 18px */;
   @include flex-center;
   color: $text-muted;
   border-radius: 50%;
@@ -577,7 +602,7 @@ onMounted(() => {
 
 .search-suggestions {
   position: absolute;
-  top: 60px;
+  top: 3.75rem /* 60px */;
   left: 0;
   right: 0;
   background: $bg-secondary;
@@ -599,8 +624,8 @@ onMounted(() => {
 }
 
 .suggestion-icon {
-  width: 16px;
-  height: 16px;
+  width: 1rem /* 16px */;
+  height: 1rem /* 16px */;
   color: $text-muted;
 }
 
@@ -640,7 +665,7 @@ onMounted(() => {
 }
 
 .hot-rank {
-  width: 24px;
+  width: 1.5rem /* 24px */;
   text-align: center;
   font-size: $font-md;
   font-weight: 600;
@@ -665,14 +690,14 @@ onMounted(() => {
 }
 
 .hot-icon {
-  height: 12px;
+  height: 0.75rem /* 12px */;
   width: auto;
 }
 
 .hot-content {
   font-size: $font-xs;
   color: $text-muted;
-  margin-top: 2px;
+  margin-top: 0.125rem /* 2px */;
 }
 
 .hot-score {
@@ -684,7 +709,7 @@ onMounted(() => {
   display: flex;
   gap: $spacing-lg;
   margin-bottom: $spacing-md;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .tab-item {
@@ -702,10 +727,10 @@ onMounted(() => {
     &::after {
       content: '';
       position: absolute;
-      bottom: -1px;
+      bottom: -0.125rem /* 1px */;
       left: 0;
       right: 0;
-      height: 2px;
+      height: 0.125rem /* 2px */;
       background: $primary-color;
       border-radius: $radius-full;
     }
@@ -726,7 +751,7 @@ onMounted(() => {
 .songs-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .playlists-grid {
@@ -751,8 +776,8 @@ onMounted(() => {
 }
 
 .artist-image {
-  width: 80px;
-  height: 80px;
+  width: 5rem /* 80px */;
+  height: 5rem /* 80px */;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -760,7 +785,7 @@ onMounted(() => {
 .artist-name {
   font-size: $font-xs;
   color: $text-secondary;
-  max-width: 80px;
+  max-width: 5rem /* 80px */;
 }
 
 .albums-grid {
@@ -790,7 +815,7 @@ onMounted(() => {
 }
 
 .album-artist {
-  font-size: 10px;
+  font-size: 0.625rem /* 10px */;
   color: $text-muted;
 }
 

@@ -117,16 +117,16 @@ const goToPlayer = () => {
 
 .mini-player {
   position: fixed;
-  bottom: 56px;
+  bottom: 3.5rem /* 56px */;
   left: #{$spacing-lg};
   right: #{$spacing-lg};
-  height: 68px;
+  height: 4.25rem /* 68px */;
   display: flex;
   align-items: center;
   gap: $spacing-sm;
   padding: $spacing-sm $spacing-md;
   background: rgba($bg-card, 0.6);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(1.25rem /* 20px */);
   border-radius: $radius-lg;
   box-shadow: $shadow-lg;
   z-index: $z-player - 1;
@@ -136,8 +136,8 @@ const goToPlayer = () => {
 }
 
 .player-cover {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem /* 40px */;
+  height: 2.5rem /* 40px */;
   border-radius: $radius-md;
   overflow: hidden;
   flex-shrink: 0;
@@ -156,7 +156,7 @@ const goToPlayer = () => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .info-title {
@@ -180,8 +180,8 @@ const goToPlayer = () => {
 }
 
 .control-btn {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: $text-primary;
   border-radius: 50%;
@@ -192,8 +192,8 @@ const goToPlayer = () => {
   }
   
   svg {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem /* 22px */;
+    height: 1.375rem /* 22px */;
   }
   
   &:first-child {
@@ -210,7 +210,7 @@ const goToPlayer = () => {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 0.125rem /* 2px */;
   background: $border-color;
   
   .progress-bar {

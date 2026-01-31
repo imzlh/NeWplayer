@@ -205,8 +205,8 @@ onBeforeUnmount(() => {
 .text-display-sheet {
     width: 100%;
     background: #53535a;
-    border-radius: 14px 14px 0 0;
-    padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
+    border-radius: 0.875rem /* 14px */ 0.875rem /* 14px */ 0 0;
+    padding: 0.5rem /* 8px */ 0.5rem /* 8px */ calc(env(safe-area-inset-bottom) + 0.5rem /* 8px */);
     max-height: 85vh;
     display: flex;
     flex-direction: column;
@@ -217,19 +217,19 @@ onBeforeUnmount(() => {
 }
 
 .drag-indicator {
-    width: 36px;
-    height: 5px;
+    width: 2.25rem /* 36px */;
+    height: 0.25rem /* 5px */;
     background: #c7c7cc;
-    border-radius: 3px;
-    margin: 8px auto 12px;
+    border-radius: 0.25rem /* 3px */;
+    margin: 0.5rem /* 8px */ auto 0.75rem /* 12px */;
     flex-shrink: 0;
 }
 
 .text-display-title {
-    font-size: 13px;
+    font-size: 0.75rem /* 13px */;
     color: #f1f1f1;
     text-align: center;
-    padding: 8px 16px 12px;
+    padding: 0.5rem /* 8px */ 1rem /* 16px */ 0.75rem /* 12px */;
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -237,12 +237,12 @@ onBeforeUnmount(() => {
 .text-display-content {
     flex: 1;
     min-height: 0;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem /* 8px */;
 }
 
 .content-wrapper {
-    border-radius: 14px;
-    padding: 16px;
+    border-radius: 0.875rem /* 14px */;
+    padding: 1rem /* 16px */;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     height: 100%;
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
 }
 
 .content-text {
-    font-size: 15px;
+    font-size: 1rem /* 15px */;
     color: #f1f1f1;
     line-height: 1.6;
     word-wrap: break-word;
@@ -267,17 +267,17 @@ onBeforeUnmount(() => {
 
 .action-confirm {
     width: 100%;
-    padding: 16px;
-    font-size: 17px;
+    padding: 1rem /* 16px */;
+    font-size: 1rem /* 17px */;
     font-weight: 600;
     color: #9acbff;
     background: rgb(65, 65, 65);
     border: none;
-    border-radius: 14px;
+    border-radius: 0.875rem /* 14px */;
     cursor: pointer;
     transition: background 0.15s;
     text-align: center;
-    min-height: 56px;
+    min-height: 3.5rem /* 56px */;
 }
 
 .action-confirm:active {
@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
 
 /* Scrollbar styling */
 .content-wrapper::-webkit-scrollbar {
-    width: 4px;
+    width: 0.25rem /* 4px */;
 }
 
 .content-wrapper::-webkit-scrollbar-track {
@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
 
 .content-wrapper::-webkit-scrollbar-thumb {
     background: #8e8e93;
-    border-radius: 2px;
+    border-radius: 0.125rem /* 2px */;
 }
 
 .content-wrapper::-webkit-scrollbar-thumb:hover {

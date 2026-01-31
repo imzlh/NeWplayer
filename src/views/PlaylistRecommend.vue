@@ -67,19 +67,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import * as api from '@/api'
 import type { IPlaylist, IPlaylistType } from '@/types'
 import Loading from '@/components/Loading.vue'
 import { showAction } from '@/stores/action'
 
 const router = useRouter()
+const route = useRoute()
 
 // 状态
 const playlists = ref<IPlaylist[]>([])
 const categories = ref<IPlaylistType[]>([])
-const currentCategory = ref('全部')
+// 从URL参数中获取当前分类
+const currentCategory = ref((route.query.cat as string) || '全部')
 const loading = ref(false)
 const loadingMore = ref(false)
 const headerScrolled = ref(false)
@@ -181,14 +183,26 @@ const switchCategory = (cat: string) => {
         value: cat.type
       })), opt => {
         currentCategory.value = opt.value
+        updateURL()
         fetchPlaylists(true)
       });
     }
     return;
   }
   currentCategory.value = cat
+  updateURL()
   fetchPlaylists(true)
   contentRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// 更新URL参数
+const updateURL = () => {
+  router.replace({
+    query: {
+      ...route.query,
+      cat: currentCategory.value === '全部' ? undefined : currentCategory.value
+    }
+  })
 }
 
 // 滚动处理
@@ -198,7 +212,7 @@ const handleScroll = () => {
   const { scrollTop, scrollHeight, clientHeight } = contentRef.value
   headerScrolled.value = scrollTop > 100
   
-  // 距离底部 200px 时触发加载
+  // 距离底部 12.5rem /* 200px */ 时触发加载
   if (scrollHeight - scrollTop - clientHeight < 200 && !loadingMore.value && hasMore.value) {
     loadMoreTrigger.value = true
     fetchPlaylists()
@@ -212,6 +226,18 @@ const goToPlaylist = (id: number) => {
 
 const goBack = () => router.back()
 
+// 监听路由参数变化
+watch(() => route.query.cat, (newCat) => {
+  const catValue = Array.isArray(newCat) ? newCat[0] : newCat
+  if (catValue && catValue !== currentCategory.value) {
+    currentCategory.value = catValue
+    fetchPlaylists(true)
+  } else if (!catValue && currentCategory.value !== '全部') {
+    currentCategory.value = '全部'
+    fetchPlaylists(true)
+  }
+})
+
 onMounted(async () => {
   await fetchCategories()
   await fetchPlaylists(true)
@@ -223,7 +249,7 @@ onMounted(async () => {
 
 .playlist-recommend {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
   background: $bg-primary;
 }
 
@@ -243,22 +269,22 @@ onMounted(async () => {
   
   &.scrolled {
     background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(1.25rem /* 20px */);
+    box-shadow: 0 0.125rem /* 2px */ 0.5rem /* 8px */ rgba(0, 0, 0, 0.1);
   }
 }
 
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   color: $text-primary;
   border-radius: 50%;
   background: rgba($text-primary, 0.1);
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -275,13 +301,13 @@ onMounted(async () => {
 }
 
 .placeholder {
-  width: 36px;
+  width: 2.25rem /* 36px */;
 }
 
 .content {
   height: 100vh;
   overflow-y: auto;
-  padding-top: 60px;
+  padding-top: 3.75rem /* 60px */;
 }
 
 .category-section {
@@ -290,7 +316,7 @@ onMounted(async () => {
   background: $bg-primary;
   z-index: 100;
   padding: $spacing-sm 0;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 0.125rem /* 1px */ solid $border-color;
 }
 
 .category-scroll {
@@ -368,20 +394,20 @@ onMounted(async () => {
 
 .play-count {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 0.25rem /* 4px */;
+  right: 0.25rem /* 4px */;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
+  gap: 0.125rem /* 2px */;
+  padding: 0.125rem /* 2px */ 0.375rem /* 6px */;
   background: rgba(0, 0, 0, 0.6);
   border-radius: $radius-sm;
   color: white;
-  font-size: 11px;
+  font-size: 0.75rem /* 11px */;
   
   svg {
-    width: 12px;
-    height: 12px;
+    width: 0.75rem /* 12px */;
+    height: 0.75rem /* 12px */;
   }
 }
 
@@ -397,6 +423,6 @@ onMounted(async () => {
 }
 
 .bottom-spacer {
-  height: 80px;
+  height: 5rem /* 80px */;
 }
 </style>

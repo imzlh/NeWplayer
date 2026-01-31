@@ -44,8 +44,8 @@ const goHome = () => router.push('/')
 }
 
 .error-icon {
-  width: 100px;
-  height: 100px;
+  width: 6.25rem /* 100px */;
+  height: 6.25rem /* 100px */;
   color: $text-muted;
   margin-bottom: $spacing-lg;
   
@@ -56,7 +56,7 @@ const goHome = () => router.push('/')
 }
 
 .error-code {
-  font-size: 72px;
+  font-size: 4.5rem /* 72px */;
   font-weight: 700;
   color: $primary-color;
   line-height: 1;

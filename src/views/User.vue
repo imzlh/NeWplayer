@@ -113,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getImageUrl } from '@/utils/lyric'
@@ -148,7 +148,9 @@ const goToLikedSongs = () => {
 }
 
 const showSettings = () => {
-  // 显示设置
+  // 显示设置面板
+  const showSettings = inject('showSettings') as () => void
+  showSettings()
 }
 
 // 退出登录
@@ -169,7 +171,7 @@ onMounted(() => {
 
 .user-page {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 7.5rem /* 120px */;
 }
 
 .user-header {
@@ -197,11 +199,11 @@ onMounted(() => {
 }
 
 .user-avatar {
-  width: 80px;
-  height: 80px;
+  width: 5rem /* 80px */;
+  height: 5rem /* 80px */;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: 0.25rem /* 3px */ solid rgba(255, 255, 255, 0.1);
 }
 
 .user-info {
@@ -230,7 +232,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0.125rem /* 2px */;
 }
 
 .stat-value {
@@ -268,20 +270,20 @@ onMounted(() => {
   }
   
   & + .menu-item {
-    border-top: 1px solid $border-color;
+    border-top: 0.125rem /* 1px */ solid $border-color;
   }
 }
 
 .menu-icon {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem /* 36px */;
+  height: 2.25rem /* 36px */;
   @include flex-center;
   border-radius: $radius-md;
   color: white;
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem /* 20px */;
+    height: 1.25rem /* 20px */;
   }
 }
 
@@ -297,8 +299,8 @@ onMounted(() => {
 }
 
 .menu-arrow {
-  width: 16px;
-  height: 16px;
+  width: 1rem /* 16px */;
+  height: 1rem /* 16px */;
   color: $text-muted;
 }
 </style>

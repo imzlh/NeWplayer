@@ -40,15 +40,15 @@ withDefaults(defineProps<Props>(), {
     right: 0;
     bottom: 0;
     background: rgba($bg-primary, 0.9);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(0.625rem /* 10px */);
     z-index: $z-modal;
   }
 }
 
 .loading-spinner {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 3rem /* 48px */;
+  height: 3rem /* 48px */;
 }
 
 .spinner-ring {
@@ -57,7 +57,7 @@ withDefaults(defineProps<Props>(), {
   left: 0;
   width: 100%;
   height: 100%;
-  border: 3px solid transparent;
+  border: 0.25rem /* 3px */ solid transparent;
   border-top-color: $primary-color;
   border-radius: 50%;
   animation: spin 1s linear infinite;

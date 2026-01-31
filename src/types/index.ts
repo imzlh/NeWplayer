@@ -363,24 +363,9 @@ export interface IDJProgram {
 export interface ILoginResponse {
   code: number
   cookie: string
-  token: string
-  profile: IUser
-  account?: {
-    id: number
-    userName: string
-    type: number
-    status: number
-    whitelistAuthority: number
-    createTime: number
-    salt: string
-    tokenVersion: number
-    ban: number
-    baoyueVersion: number
-    donateVersion: number
-    vipType: number
-    viptypeVersion: number
-    anonimousUser: boolean
-  }
+  data: boolean
+
+  message?: string
 }
 
 // API响应类型

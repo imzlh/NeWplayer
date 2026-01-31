@@ -18,7 +18,7 @@
         :class="{ 'tab-active': loginType === 'phone' }"
         @click="loginType = 'phone'"
       >
-        手机号
+        手机号或邮箱
       </button>
       <button
         class="tab-item"
@@ -29,24 +29,33 @@
       </button>
     </div>
     
-    <!-- 手机号登录 -->
+    <!-- 手机号或邮箱登录 -->
     <div v-if="loginType === 'phone'" class="login-form">
       <div class="form-group">
         <div class="input-wrapper">
-          <span class="input-prefix">+86</span>
           <input
             v-model="phone"
-            type="tel"
+            type="text"
             class="form-input"
-            placeholder="请输入手机号"
+            :placeholder="useCaptcha ? '请输入手机号' : '请输入手机号或邮箱'"
             maxlength="11"
           />
+          <button class="captcha-send" @click="sending ? noCaptcha() : sendCode()">
+            {{ sending ? '返回账密' : '发送验证码' }}
+          </button>
         </div>
       </div>
       
       <div class="form-group">
         <div class="input-wrapper">
-          <input
+          <input v-if="useCaptcha"
+            v-model="password"
+            type="text"
+            class="form-input"
+            placeholder="请输入验证码"
+            maxlength="6"
+          />
+          <input v-else
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             class="form-input"
@@ -116,6 +125,8 @@ import { showText } from '@/stores/text'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const useCaptcha = ref(false)
+const sending = ref(false)
 
 // 状态
 const loginType = ref<'phone' | 'qr'>('phone')
@@ -149,15 +160,67 @@ const qrStatusText = computed(() => {
 
 // 计算属性
 const canLogin = computed(() => {
-  return phone.value.length === 11 && password.value.length >= 6
+  return useCaptcha.value
+    ? password.value.length >= 4    // 验证码4位
+    : phone.value.length === 11 && password.value.length >= 6
 })
 
-// 手机号登录
+// 发送验证码
+let sendTimer: ReturnType<typeof setTimeout> | null = null;
+const sendCode = async () => {
+  if (sending.value) return console.log('发送中')
+  if (!phone.value) {
+    showText('请输入手机号')
+    return
+  }
+  sending.value = true
+  try {
+    const res = await api.sendCaptcha(phone.value)
+    if (res.code === 200) {
+      useCaptcha.value = true
+      showText('验证码已发送。如需重新发送，请60秒后重试')
+      sendTimer = setTimeout(() => {
+        sending.value = false,
+        sendTimer = null;
+      }, 60000);
+    } else {
+      showText(res.message || '验证码发送失败')
+    }
+  } catch (error) {
+    console.error('发送验证码失败:', error)
+    showText('验证码发送失败')
+  }
+}
+
+const noCaptcha = () => {
+  useCaptcha.value = false
+  sending.value = false
+  if (sendTimer !== null) {
+    clearTimeout(sendTimer);
+    sendTimer = null;
+  }
+}
+
+// 手机号或邮箱登录
 const handleLogin = async () => {
   if (!canLogin.value) return
-  
-  loading.value = true
-  const result = await userStore.loginByPhone(phone.value, password.value)
+
+  const name = phone.value;
+  loading.value = true;
+  let result
+  if (/^[0-9]+$/.test(name)) {
+    if (useCaptcha.value) {
+      result = await userStore.verifyCaptcha(name, password.value);
+    } else {
+      result = await userStore.loginByPhone(name, password.value)
+    }
+  } else if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,8}$/.test(name)) {
+    result = await userStore.loginByEmail(name, password.value)
+  } else {
+    showText('请输入有效的手机号或邮箱')
+    loading.value = false
+    return
+  }
   loading.value = false
   
   if (result.success) {
@@ -303,8 +366,8 @@ onUnmounted(() => {
 }
 
 .header-back {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem /* 40px */;
+  height: 2.5rem /* 40px */;
   @include flex-center;
   color: $text-primary;
   border-radius: 50%;
@@ -315,8 +378,8 @@ onUnmounted(() => {
   }
   
   svg {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem /* 22px */;
+    height: 1.375rem /* 22px */;
   }
 }
 
@@ -327,7 +390,7 @@ onUnmounted(() => {
 }
 
 .header-placeholder {
-  width: 40px;
+  width: 2.5rem /* 40px */;
 }
 
 .login-tabs {
@@ -351,11 +414,11 @@ onUnmounted(() => {
     &::after {
       content: '';
       position: absolute;
-      bottom: -4px;
+      bottom: -0.25rem /* 4px */;
       left: 50%;
       transform: translateX(-50%);
-      width: 20px;
-      height: 3px;
+      width: 1.25rem /* 20px */;
+      height: 0.25rem /* 3px */;
       background: $primary-color;
       border-radius: $radius-full;
     }
@@ -378,7 +441,7 @@ onUnmounted(() => {
   padding: $spacing-md $spacing-lg;
   background: $bg-card;
   border-radius: $radius-lg;
-  border: 1px solid $border-color;
+  border: 0.125rem /* 1px */ solid $border-color;
   transition: border-color $transition-fast $ease-default;
   
   &:focus-within {
@@ -386,12 +449,12 @@ onUnmounted(() => {
   }
 }
 
-.input-prefix {
+.captcha-send {
   font-size: $font-sm;
   color: $text-secondary;
   font-weight: 500;
-  padding-right: $spacing-sm;
-  border-right: 1px solid $border-color;
+  border-left: 0.125rem /* 1px */ solid $border-color;
+  padding-left: $spacing-sm;
 }
 
 .form-input {
@@ -408,14 +471,14 @@ onUnmounted(() => {
 }
 
 .input-suffix {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem /* 24px */;
+  height: 1.5rem /* 24px */;
   @include flex-center;
   color: $text-tertiary;
   
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem /* 18px */;
+    height: 1.125rem /* 18px */;
   }
 }
 
@@ -469,8 +532,8 @@ onUnmounted(() => {
   gap: $spacing-md;
   
   img {
-    width: 200px;
-    height: 200px;
+    width: 12.5rem /* 200px */;
+    height: 12.5rem /* 200px */;
     border-radius: $radius-md;
   }
 }

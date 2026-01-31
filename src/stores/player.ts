@@ -184,14 +184,6 @@ export const usePlayerStore = defineStore('player', () => {
         throw new Error('无法获取播放地址')
       }
 
-      // 获取封面
-      if (!song.picUrl) {
-        const detail = await api.getSongDetail(song.id);
-        song.picUrl = detail.songs[0].al.picUrl
-        song.album = detail.songs[0].al
-        song.artists = detail.songs[0].ar;
-      }
-
       // 设置音频源
       audio.value.src = songData.url
       currentSong.value = song

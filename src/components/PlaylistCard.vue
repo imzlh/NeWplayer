@@ -90,17 +90,17 @@ const handleClick = () => {
 .play-count {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
+  gap: 0.125rem /* 2px */;
+  padding: 0.125rem /* 2px */ 0.375rem /* 6px */;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(0.25rem /* 4px */);
   border-radius: $radius-full;
-  font-size: 10px;
+  font-size: 0.625rem /* 10px */;
   color: $text-primary;
   
   svg {
-    width: 10px;
-    height: 10px;
+    width: 0.625rem /* 10px */;
+    height: 0.625rem /* 10px */;
   }
 }
 
