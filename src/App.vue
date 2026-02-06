@@ -62,7 +62,7 @@ import Action from '@/components/Action.vue'
 import Settings from '@/components/Settings.vue'
 import Confirm from '@/components/Confirm.vue'
 import Text from './components/Text.vue'
-import { hideText, textStore, updateText } from './stores/text'
+import { textStore, updateText } from './stores/text'
 
 const route = useRoute()
 const userStore = useUserStore()
