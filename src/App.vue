@@ -22,8 +22,14 @@
     <Toast ref="toastRef" />
 
     <!-- 全局text文本显示 -->
-    <Text :modelValue="textStore.showTextDisplay.value" @close="hideText()"
-      :text="textStore.displayText.value" :title="textStore.displayTitle.value" />
+    <Text 
+        v-model="textStore.showTextDisplay.value"
+        :title="textStore.displayTitle.value"
+        :text="textStore.displayText.value"
+        :editable="textStore.isEditable.value"
+        :edit-placeholder="textStore.editPlaceholder.value"
+        @update:text="updateText"
+    />
     
     <!-- 全局Action组件 -->
     <Action
@@ -56,7 +62,7 @@ import Action from '@/components/Action.vue'
 import Settings from '@/components/Settings.vue'
 import Confirm from '@/components/Confirm.vue'
 import Text from './components/Text.vue'
-import { hideText, textStore } from './stores/text'
+import { hideText, textStore, updateText } from './stores/text'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -116,7 +122,7 @@ const getComponentKey = (route: any) => {
   
   // 对于搜索页面，包含搜索参数和tab状态
   if (route.name === 'Search') {
-    const query = new URLSearchParams(route.query as any).toString()
+    const query = new URLSearchParams(route.query).toString()
     return `Search-${query}`
   }
   

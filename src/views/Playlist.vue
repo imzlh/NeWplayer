@@ -34,7 +34,7 @@
         </div>
         <div class="info-detail">
           <h2 class="detail-name">{{ playlist.name }}</h2>
-          <div class="detail-creator" v-if="playlist.creator">
+          <div class="detail-creator" v-if="playlist.creator" @click="goUser(playlist.creator)">
             <img :src="getImageUrl(playlist.creator.avatarUrl, 40, 40)" :alt="playlist.creator.nickname"
               class="creator-avatar" />
             <span class="creator-name">{{ playlist.creator.nickname }}</span>
@@ -147,7 +147,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
-import type { IPlaylist as PlaylistType, ISong } from '@/types'
+import type { IPlaylist as PlaylistType, ISong } from '@/api/types'
 import { getImageUrl, formatNumber } from '@/utils/lyric'
 
 import SongListItem from '@/components/SongListItem.vue'
@@ -246,6 +246,14 @@ const fetchSongs = async (ids: number[]) => {
   }
 }
 
+// 跳转用户详情页
+const goUser = (user: any) => {
+  router.push({
+    name: 'UserProfile',
+    params: { id: user.userId }
+  })
+}
+
 // 收藏/取消收藏
 const toggleSubscribe = async () => {
   if (!userStore.isLoggedIn) {
@@ -285,30 +293,20 @@ const showMoreActions = () => {
   const options = [
     {
       label: isSubscribed.value ? '取消收藏歌单' : '收藏歌单',
-      value: 'subscribe',
-      icon: svg.love
+      icon: svg.love,
+      callback: toggleSubscribe
     },
     {
       label: '分享歌单',
-      value: 'share',
-      icon: svg.share
+      icon: svg.share,
+      callback: () => {
+        // 实现分享功能
+        showText('分享功能待实现')
+      }
     }
   ]
 
-  showAction(options, (option) => {
-    if (!option) return
-
-    const action = option.value
-    switch (action) {
-      case 'subscribe':
-        toggleSubscribe()
-        break
-      case 'share':
-        // 实现分享功能
-        showText('分享功能待实现')
-        break
-    }
-  })
+  showAction(options)
 }
 
 // 显示歌曲操作
@@ -316,58 +314,45 @@ const showSongActions = (song: ISong) => {
   const options = [
     {
       label: '播放',
-      value: 'play',
-      icon: svg.play
+      icon: svg.play,
+      callback: () => {
+        // 播放当前歌曲
+        playerStore.playPlaylist([song], 0)
+      }
     },
     {
       label: '添加到播放列表',
-      value: 'add',
-      icon: svg.add
+      icon: svg.add,
+      callback: () => {
+        // 添加到播放列表
+        playerStore.addToPlaylist(song)
+      }
     },
     {
       label: '收藏',
-      value: 'favorite',
-      icon: svg.love
+      icon: svg.love,
+      callback: () => {
+        // 收藏歌曲
+        userStore.toggleLike(song.id)
+      }
     },
     {
       label: '下载',
-      value: 'download',
-      icon: svg.download
-    },
-    {
-      label: '删除',
-      value: 'delete',
-      icon: svg.delete,
-      destructive: true
-    }
-  ]
-
-  showAction(options, (option) => {
-    if (!option) return
-
-    const action = option.value
-    switch (action) {
-      case 'play':
-        // 播放当前歌曲
-        playerStore.playPlaylist([song], 0)
-        break
-      case 'add':
-        // 添加到播放列表
-        playerStore.addToPlaylist(song)
-        break
-      case 'favorite':
-        // 收藏歌曲
-        userStore.toggleLike(song.id)
-        break
-      case 'download':
+      icon: svg.download,
+      callback: () => {
         // 下载歌曲
         const id = song.privilege?.id
         if (id) {
           api.getSongUrl(id, 320000).then(u => u.data?.sort((a, b) => b.br - a.br)[0])
             .then(e => window.open(e?.url))
         }
-        break
-      case 'delete':
+      }
+    },
+    {
+      label: '删除',
+      icon: svg.delete,
+      destructive: true,
+      callback: () => {
         // 删除歌曲（如果是自己的歌单）
         if (!isCreator.value) {
           showText('只有歌单创建者才能删除歌曲')
@@ -378,9 +363,11 @@ const showSongActions = (song: ISong) => {
         if (index !== -1) {
           songs.value.splice(index, 1)
         }
-        break
+      }
     }
-  })
+  ]
+
+  showAction(options)
 }
 
 // 显示多选
@@ -444,95 +431,79 @@ const showBatchActions = () => {
   const options = [
     {
       label: '播放选中',
-      value: 'play',
-      icon: svg.play
+      icon: svg.play,
+      callback: () => {
+        // 播放选中的歌曲
+        const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
+        playerStore.playPlaylist(selectedSongsList, 0)
+        stopBatchAction()
+      }
     },
     {
       label: '添加到播放列表',
-      value: 'add',
-      icon: svg.add
+      icon: svg.add,
+      callback: () => {
+        // 添加到播放列表
+        const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
+        selectedSongsList.forEach(song => playerStore.addToPlaylist(song))
+        stopBatchAction()
+      }
     },
     {
       label: '收藏选中',
-      value: 'favorite',
-      icon: svg.love
+      icon: svg.love,
+      callback: () => {
+        // 收藏选中的歌曲
+        const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
+        selectedSongsList.forEach(song => userStore.toggleLike(song.id))
+        stopBatchAction()
+      }
     },
     {
       label: '删除选中',
-      value: 'delete',
       icon: svg.delete,
-      destructive: true
+      destructive: true,
+      callback: () => {
+        // 删除选中的歌曲（如果是自己的歌单）
+        if (!isCreator.value) {
+          showText('只能删除自己创建的歌单中的歌曲')
+          return
+        }
+        
+        const selectedIds = Array.from(selectedSongs.value)
+        deleteSongs(selectedIds)
+        stopBatchAction()
+      }
     }
   ]
 
-  showAction(options, batchOperate)
+  showAction(options)
 }
 
-// 批量操作
-const batchOperate = (option?: any) => {
-  const action = option?.value
-  if (!action) return
+// 批量删除歌曲
+const deleteSongs = async (songIds: number[]) => {
+  try {
+    await api.manipulatePlaylistTracks('del', playlistId.value, songIds)
+    
+    // 按索引从大到小排序，避免删除时索引变化
+    const indicesToDelete = songIds
+      .map(songId => songs.value.findIndex(song => song.id === songId))
+      .filter(index => index !== -1)
+      .sort((a, b) => b - a)
 
-  if (selectedSongs.value.size === 0) {
-    showText('请先选择歌曲')
-    return
-  }
-
-  console.log(`批量${action}选中的${selectedSongs.value.size}首歌曲`)
-
-  // 根据操作类型执行相应功能
-  switch (action) {
-    case 'play':
-      // 播放选中的歌曲
-      const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
-      playerStore.playPlaylist(selectedSongsList, 0)
-      // 退出多选模式
-      isMultipleSelect.value = false
-      selectedSongs.value.clear()
-      break
-    case 'add':
-      // 添加到播放列表
-      const songsToAdd = songs.value.filter(song => selectedSongs.value.has(song.id))
-      songsToAdd.forEach(song => playerStore.addToPlaylist(song))
-      break
-    case 'favorite':
-      // 收藏选中的歌曲
-      selectedSongs.value.forEach(async (songId) => {
-        await userStore.toggleLike(songId)
-      })
-      break
-    case 'download':
-      // 下载选中的歌曲
-      selectedSongs.value.forEach(song => {
-        const id = songs.value.find(s => s.id === song)?.privilege?.id;
-        if (id) api.getSongUrl(id, 320000).then(u => u.data?.sort((a, b) => b.br - a.br)[0])
-          .then(e => window.open(e?.url));
-      })
-      break
-    case 'delete':
-      // 删除选中的歌曲（如果是自己的歌单）
-      if (!isCreator.value) {
-        showText('只有歌单创建者才能删除歌曲')
-        return
-      }
-
-      // 按索引从大到小排序，避免删除时索引变化
-      const indicesToDelete = Array.from(selectedSongs.value)
-        .map(songId => songs.value.findIndex(song => song.id === songId))
-        .filter(index => index !== -1)
-        .sort((a, b) => b - a)
-
-      indicesToDelete.forEach(index => {
-        songs.value.splice(index, 1)
-      })
-
-      // 清空选择
-      selectedSongs.value.clear()
-      break
+    indicesToDelete.forEach(index => {
+      songs.value.splice(index, 1)
+    })
+    
+    selectedSongs.value.clear()
+    showText('删除成功')
+  } catch (error) {
+    console.error('批量删除歌曲失败:', error)
+    showText('删除失败')
   }
 }
 
-// 滚动处理
+// 处理滚动
 const handleScroll = () => {
   if (contentRef.value) {
     headerScrolled.value = contentRef.value.scrollTop > 200

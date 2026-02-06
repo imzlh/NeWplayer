@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ISong } from '@/types'
+import type { ISong } from '@/api/types'
 
 interface Props {
   song: ISong

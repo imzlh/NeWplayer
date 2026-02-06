@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, shallowRef } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   getMusicComment,
@@ -102,7 +102,7 @@ import {
   likeComment,
   unlikeComment
 } from '@/api'
-import type { IComment } from '@/types'
+import type { IComment } from '@/api/types'
 import Loading from '@/components/Loading.vue'
 
 // 定义 props
@@ -116,7 +116,7 @@ const router = useRouter()
 const emit = defineEmits(['close'])
 
 // 状态
-const comments = shallowRef<IComment[]>([])
+const comments = ref<IComment[]>([])
 const currentTab = ref<'hot' | 'latest'>('latest')
 const loading = ref(false)
 const loadingMore = ref(false)
@@ -263,7 +263,7 @@ const reply = (comment: IComment) => {
 
 // 跳转到用户主页
 const goToUser = (userId: number) => {
-  router.push({ name: 'User', params: { id: userId } })
+  router.push({ name: 'UserProfile', params: { id: userId } })
 }
 
 const goBack = () => emit('close')
@@ -311,6 +311,7 @@ onMounted(() => fetchComments(true))
   color: $text-primary;
   border-radius: 50%;
   background: rgba($text-primary, 0.1);
+  flex-shrink: 0;
 
   svg {
     width: 1.25rem /* 20px */;
@@ -328,6 +329,8 @@ onMounted(() => fetchComments(true))
   display: flex;
   gap: $spacing-md;
   border-bottom: 0.125rem /* 1px */ solid $border-color;
+  flex-shrink: 1;
+  overflow: hidden;
 }
 
 .tab-item {
@@ -386,6 +389,7 @@ onMounted(() => fetchComments(true))
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
+  margin-top: 1rem;
 }
 
 .comment-item {

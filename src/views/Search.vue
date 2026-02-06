@@ -8,10 +8,12 @@
         </svg>
       </button>
       <div class="search-input-wrapper">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          @click="handleSearch"
+        >
           <circle cx="11" cy="11" r="8"/>
           <path d="M21 21l-4.35-4.35"/>
-        </svg>
+        </svg> -->
         <input
           v-model="searchKeyword"
           type="text"
@@ -31,7 +33,11 @@
           </svg>
         </button>
       </div>
-      <button class="header-search-btn" @click="handleSearch">搜索</button>
+      <button class="header-search-btn" @click="handleSearch">
+        <svg fill="currentColor" viewBox="0 0 16 16">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+        </svg>
+      </button>
     </header>
     
     <!-- 搜索建议 -->
@@ -200,7 +206,7 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import * as api from '@/api'
-import type { ISong, IPlaylist, IArtist, IAlbum } from '@/types'
+import type { ISong, IPlaylist, IArtist, IAlbum } from '@/api/types'
 import { getImageUrl, formatNumber, debounce } from '@/utils/lyric'
 
 import SongListItem from '@/components/SongListItem.vue'
@@ -283,14 +289,7 @@ const fetchSuggestions = debounce(async (keyword: string) => {
   try {
     const res = await api.getSearchSuggest(keyword)
     if (res.code === 200 && res.result) {
-      const allSuggestions: { keyword: string }[] = []
-      if (res.result.songs) {
-        allSuggestions.push(...res.result.songs.map((s: ISong) => ({ keyword: s.name })))
-      }
-      if (res.result.artists) {
-        allSuggestions.push(...res.result.artists.map((a: IArtist) => ({ keyword: a.name })))
-      }
-      suggestions.value = allSuggestions.slice(0, 8)
+      suggestions.value = res.result.allMatch.map(m => ({ keyword: m.keyword }));
     }
   } catch (error) {
     console.error('获取搜索建议失败:', error)
@@ -544,13 +543,14 @@ onMounted(() => {
 }
 
 .search-input-wrapper {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: $spacing-xs;
   padding: $spacing-sm $spacing-md;
   background: $bg-card;
   border-radius: $radius-full;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .search-icon {
@@ -558,6 +558,7 @@ onMounted(() => {
   height: 1rem /* 16px */;
   color: $text-muted;
   flex-shrink: 0;
+  display: block;
 }
 
 .search-input {
@@ -567,6 +568,7 @@ onMounted(() => {
   border: none;
   outline: none;
   flex-shrink: 1;
+  min-width: 0;
   
   &::placeholder {
     color: $text-muted;
@@ -574,8 +576,8 @@ onMounted(() => {
 }
 
 .clear-btn {
-  width: 1.125rem /* 18px */;
-  height: 1.125rem /* 18px */;
+  width: 1rem;
+  height: 1rem;
   @include flex-center;
   color: $text-muted;
   border-radius: 50%;
@@ -594,10 +596,12 @@ onMounted(() => {
 
 .header-search-btn {
   padding: $spacing-sm $spacing-md;
-  font-size: $font-sm;
-  color: $primary-color;
-  font-weight: 500;
   flex-shrink: 0;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .search-suggestions {

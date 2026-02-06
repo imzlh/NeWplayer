@@ -20,15 +20,15 @@
       </div>
       <div class="user-stats">
         <div class="stat-item">
-          <span class="stat-value">{{ userStore.user?.eventCount || 0 }}</span>
+          <span class="stat-value">{{ eventCount }}</span>
           <span class="stat-label">动态</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ userStore.user?.follows || 0 }}</span>
-          <span class="stat-label">关注</span>
+          <span class="stat-value">{{ userCount?.createdPlaylistCount || 0 }}</span>
+          <span class="stat-label">歌单</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ userStore.user?.followeds || 0 }}</span>
+          <span class="stat-value">{{ followerCount }}</span>
           <span class="stat-label">粉丝</span>
         </div>
       </div>
@@ -117,18 +117,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, inject, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getImageUrl } from '@/utils/lyric'
-import { getLikeList } from '@/api'
+import { getLikeList, getUserEvent, getUserFollower, getUserSubcount } from '@/api'
 import { showConfirm } from '@/stores/confirm'
 import { showText } from '@/stores/text'
+import { IUser, IUserCountInfo, IUserEvent } from '@/api/types'
 
 const router = useRouter()
 const userStore = useUserStore()
+const userCount = shallowRef<IUserCountInfo>();
+const follower = shallowRef<IUser[]>()
+const events = shallowRef<IUserEvent[]>()
+const followerCount = ref(0)
+const eventCount = ref(0)
 
 const likeCount = ref(0)
+getUserSubcount().then(r => userCount.value = r);
+getUserFollower(userStore.userId).then(r => (follower.value = r.followeds, followerCount.value = r.size));
+getUserEvent(userStore.userId).then(r => (events.value = r.events, eventCount.value = r.size));
 
 // 获取喜欢歌曲数量
 const fetchLikeCount = async () => {

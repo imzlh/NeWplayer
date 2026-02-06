@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { IUser } from '@/types'
+import type { IUser, IUserState } from '@/api/types'
 import * as api from '@/api'
-import { KV } from '@/api/request'
+import { Cookie, KV } from '@/api/request'
 import { usePlayerStore } from './player'
 
 export const useUserStore = defineStore('user', () => {
   // State
-  const user = ref<IUser | null>(null)
+  const user = ref<(IUser & IUserState) | null>(null)
   const isLoggedIn = ref(false)
   const likeList = ref<number[]>([])
   const loading = ref(false)
@@ -19,7 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const avatarUrl = computed(() => user.value?.avatarUrl || '')
 
   // Actions
-  const setUser = async (userData: IUser | null) => {
+  const setUser = async (userData: (IUser & IUserState) | null) => {
     user.value = userData
     isLoggedIn.value = !!userData
   }
@@ -28,7 +28,7 @@ export const useUserStore = defineStore('user', () => {
     cookie.value = cookieStr
     // 用户成功登录，两侧都同步
     localStorage.setItem('cookie', cookieStr)
-    await KV.put('new.user.cookie', cookieStr)
+    await KV.put('new.user.cookie', cookieStr);
   }
 
   const initFromStorage = async () => {
@@ -46,6 +46,7 @@ export const useUserStore = defineStore('user', () => {
           if (kvCookie) {
             cookie.value = kvCookie
             localStorage.setItem('cookie', kvCookie)
+            await Cookie.set(kvCookie)
             await checkLoginStatus()
           }
         } catch (error) {
@@ -59,6 +60,7 @@ export const useUserStore = defineStore('user', () => {
         if (kvCookie) {
           cookie.value = kvCookie
           localStorage.setItem('cookie', kvCookie)
+          await Cookie.set(kvCookie)
           await checkLoginStatus()
         }
       } catch (error) {
@@ -109,7 +111,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       const res = await api.getLoginStatus()
       if (res.data?.profile) {
-        setUser(res.data.profile)
+        setUser({ ...res.data.account, ...res.data.profile })
         await fetchLikeList(res.data.profile.userId)
         return true
       }

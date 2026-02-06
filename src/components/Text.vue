@@ -10,13 +10,22 @@
                     <div v-if="title" class="text-display-title">{{ title }}</div>
 
                     <div class="text-display-content">
-                        <div class="content-wrapper" :style="contentStyle">
-                            <p class="content-text">{{ text }}</p>
+                        <div class="content-wrapper" :style="contentStyle" @click="handleContentClick">
+                            <p v-if="!isEditing" class="content-text">{{ text }}</p>
+                            <textarea v-else v-model="editText" class="content-edit" ref="editTextarea" 
+                                @blur="finishEdit" @keydown.enter="finishEdit" @keydown.esc="cancelEdit"
+                                :placeholder="editPlaceholder" rows="4"></textarea>
                         </div>
                     </div>
 
                     <div class="text-display-actions">
-                        <button class="action-confirm" @click="handleConfirm">
+                        <button v-if="isEditing" class="action-cancel" @click="cancelEdit">
+                            取消
+                        </button>
+                        <button v-if="isEditing" class="action-confirm" @click="finishEdit">
+                            保存
+                        </button>
+                        <button v-else class="action-confirm" @click="handleConfirm">
                             {{ confirmText }}
                         </button>
                     </div>
@@ -40,6 +49,8 @@ interface Props {
     dragThreshold?: number
     zIndex?: number
     maxHeight?: string
+    editable?: boolean
+    editPlaceholder?: string
 }
 
 const props = withDefaults(defineProps<Partial<Props>>(), {
@@ -52,13 +63,16 @@ const props = withDefaults(defineProps<Partial<Props>>(), {
     showDragIndicator: true,
     dragThreshold: 100,
     zIndex: 9999,
-    maxHeight: '60vh'
+    maxHeight: '60vh',
+    editable: false,
+    editPlaceholder: '请输入内容'
 })
 
 interface Emits {
     (e: 'update:modelValue', value: boolean): void
     (e: 'close'): void
     (e: 'confirm'): void
+    (e: 'update:text', value: string): void
 }
 
 const emit = defineEmits<Emits>()
@@ -68,6 +82,9 @@ const dragY = ref(0)
 const startY = ref(0)
 const isDragging = ref(false)
 const isMouseDragging = ref(false)
+const isEditing = ref(false)
+const editText = ref('')
+const editTextarea = ref<HTMLTextAreaElement>()
 
 // Computed
 const sheetStyle = computed(() => ({
@@ -164,12 +181,45 @@ const handleConfirm = () => {
     if (props.closeOnConfirm) handleClose()
 }
 
+// Edit handlers
+const handleContentClick = () => {
+    if (props.editable && !isEditing.value) {
+        startEdit()
+    }
+}
+
+const startEdit = () => {
+    isEditing.value = true
+    editText.value = props.text
+    nextTick(() => {
+        if (editTextarea.value) {
+            editTextarea.value.focus()
+            // 设置光标到文本末尾
+            editTextarea.value.setSelectionRange(editText.value.length, editText.value.length)
+        }
+    })
+}
+
+const finishEdit = () => {
+    if (editText.value.trim() !== props.text) {
+        emit('update:text', editText.value.trim())
+    }
+    isEditing.value = false
+}
+
+const cancelEdit = () => {
+    editText.value = props.text
+    isEditing.value = false
+}
+
 // Watch for show changes
 watch(() => props.modelValue, (newVal) => {
     if (newVal) {
         dragY.value = 0
         isDragging.value = false
         isMouseDragging.value = false
+        isEditing.value = false
+        editText.value = props.text
 
         nextTick(() => {
             document.addEventListener('mousemove', handleGlobalMouseMove)
@@ -207,7 +257,6 @@ onBeforeUnmount(() => {
     background: #53535a;
     border-radius: 0.875rem /* 14px */ 0.875rem /* 14px */ 0 0;
     padding: 0.5rem /* 8px */ 0.5rem /* 8px */ calc(env(safe-area-inset-bottom) + 0.5rem /* 8px */);
-    max-height: 85vh;
     display: flex;
     flex-direction: column;
 }
@@ -229,7 +278,7 @@ onBeforeUnmount(() => {
     font-size: 0.75rem /* 13px */;
     color: #f1f1f1;
     text-align: center;
-    padding: 0.5rem /* 8px */ 1rem /* 16px */ 0.75rem /* 12px */;
+    padding-top: 0.5rem /* 8px */ 1rem /* 16px */ 0.75rem /* 12px */;
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -250,38 +299,65 @@ onBeforeUnmount(() => {
 }
 
 .content-text {
-    font-size: 1rem /* 15px */;
     color: #f1f1f1;
-    line-height: 1.6;
-    word-wrap: break-word;
-    word-break: break-word;
-    white-space: pre-wrap;
+    font-size: 0.875rem /* 14px */;
+    line-height: 1.5;
     margin: 0;
-    user-select: text;
-    -webkit-user-select: text;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.content-edit {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f1f1f1;
+    font-size: 0.875rem /* 14px */;
+    line-height: 1.5;
+    resize: none;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
 }
 
 .text-display-actions {
-    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem /* 8px */ 0;
+    gap: 0.5rem /* 8px */;
+}
+
+.action-confirm,
+.action-cancel {
+    flex: 1;
+    padding: 0.75rem /* 12px */;
+    border-radius: 0.5rem /* 8px */;
+    font-size: 0.875rem /* 14px */;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .action-confirm {
-    width: 100%;
-    padding: 1rem /* 16px */;
-    font-size: 1rem /* 17px */;
-    font-weight: 600;
-    color: #9acbff;
-    background: rgb(65, 65, 65);
+    background: #007aff;
+    color: white;
     border: none;
-    border-radius: 0.875rem /* 14px */;
-    cursor: pointer;
-    transition: background 0.15s;
-    text-align: center;
-    min-height: 3.5rem /* 56px */;
 }
 
-.action-confirm:active {
-    background: #353535;
+.action-cancel {
+    background: #3a3a3c;
+    color: white;
+    border: none;
+}
+
+.action-confirm:hover {
+    background: #0051dd;
+}
+
+.action-cancel:hover {
+    background: #2a2a2c;
 }
 
 /* Animations */
@@ -303,23 +379,5 @@ onBeforeUnmount(() => {
 .slide-enter-from,
 .slide-leave-to {
     transform: translateY(100%);
-}
-
-/* Scrollbar styling */
-.content-wrapper::-webkit-scrollbar {
-    width: 0.25rem /* 4px */;
-}
-
-.content-wrapper::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.content-wrapper::-webkit-scrollbar-thumb {
-    background: #8e8e93;
-    border-radius: 0.125rem /* 2px */;
-}
-
-.content-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #a0a0a5;
 }
 </style>

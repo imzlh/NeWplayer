@@ -26,6 +26,12 @@
           </svg>
           <span>播放全部</span>
         </button>
+        <button class="action-btn action-random" @click="playRandom">
+          <svg fill="currentColor" viewBox="0 0 16 16">
+            <path d="M12.5 2A2.5 2.5 0 0 0 10 4.5a.5.5 0 0 1-1 0A3.5 3.5 0 1 1 12.5 8H.5a.5.5 0 0 1 0-1h12a2.5 2.5 0 0 0 0-5zm-7 1a1 1 0 0 0-1 1 .5.5 0 0 1-1 0 2 2 0 1 1 2 2h-5a.5.5 0 0 1 0-1h5a1 1 0 0 0 0-2zM0 9.5A.5.5 0 0 1 .5 9h10.042a3 3 0 1 1-3 3 .5.5 0 0 1 1 0 2 2 0 1 0 2-2H.5a.5.5 0 0 1-.5-.5z"/>
+          </svg>
+          <span>随机播放</span>
+        </button>
       </section>
       
       <section class="daily-songs">
@@ -41,6 +47,7 @@
             :is-active="playerStore.currentSong?.id === song.id"
             :is-playing="playerStore.isPlaying && playerStore.currentSong?.id === song.id"
             @click="playSong(song, index)"
+            @more="showMoreOptions(song)"
           />
         </div>
       </section>
@@ -55,9 +62,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import * as api from '@/api'
-import type { IDailySong, ISong } from '@/types'
+import type { ISong, ISong2Recommend } from '@/api/types'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
+import { showDefaultSongActions } from '@/utils/action'
+import { svg } from '@/utils/svg'
 
 const router = useRouter()
 const playerStore = usePlayerStore()
@@ -73,14 +82,14 @@ const fetchDailySongs = async () => {
   try {
     const res = await api.getDailyRecommendSongs()
     if (res.code === 200 && res.data) {
-      const data = res.data as { dailySongs: IDailySong[]; recommendReasons: any[] }
-      songs.value = data.dailySongs.map((song: any) => ({
+      const data = res.data;
+      songs.value = data.dailySongs.map(song => ({
         ...song,
         artists: song.ar,
         album: song.al,
         duration: song.dt,
         picUrl: song.al?.picUrl,
-        reason: song.reason,
+        reason: data.recommendReasons.find(reason => reason.songId === song.id)?.reason || '',
       }))
     }
   } catch (error) {
@@ -93,6 +102,12 @@ const fetchDailySongs = async () => {
 const playAll = () => {
   if (songs.value.length === 0) return
   playerStore.playPlaylist(songs.value, 0)
+}
+
+const playRandom = () => {
+  if (songs.value.length === 0) return
+  const randomIndex = Math.floor(Math.random() * songs.value.length)
+  playerStore.playPlaylist(songs.value, randomIndex)
 }
 
 const playSong = async (song: ISong, index: number) => {
@@ -109,6 +124,16 @@ const handleScroll = () => {
 }
 
 const goBack = () => router.back()
+
+const showMoreOptions = (song: ISong) => {
+  showDefaultSongActions(song, [
+    {
+      label: (song as ISong2Recommend).recommendReason,
+      icon: svg.love,
+      callback: () => void 0
+    }
+  ]);
+}
 
 onMounted(fetchDailySongs)
 </script>
@@ -233,6 +258,11 @@ onMounted(fetchDailySongs)
   &.action-playall {
     background: $gradient-primary;
     color: white;
+  }
+  
+  &.action-random {
+    background: $bg-tertiary;
+    color: $text-primary;
   }
 }
 

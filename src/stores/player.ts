@@ -1,73 +1,87 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { ISong, ILyric, PlayMode } from '@/types'
-import { PlayMode as PlayModeEnum } from '@/types'
+import { ref, computed, shallowRef } from 'vue'
+import type { ILyric, ISong, PlayMode } from '@/api/types'
+import { PlayMode as PlayModeEnum } from '@/api/types'
 import * as api from '@/api'
 import { parseLyric } from '@/utils/lyric'
 
+// ============ 类型定义 ============
+export interface QualityOption {
+  label: string
+  value: number
+  description?: string
+}
+
+interface PlayerState {
+  playlist: ISong[]
+  currentIndex: number
+  progress: number
+  duration: number
+  isPlaying: boolean
+  lyrics: ILyric[]
+  currentLyricIndex: number
+}
+
+// ============ 常量定义 ============
+const DEFAULT_VOLUME = 0.8
+const DEFAULT_PLAY_MODE = PlayModeEnum.Sequence
+const DEFAULT_QUALITY = 320000
+const QUALITY_OPTIONS: QualityOption[] = [
+  { label: '标准', value: 128000, description: '128kbps' },
+  { label: '较高', value: 192000, description: '192kbps' },
+  { label: '极高', value: 320000, description: '320kbps' },
+  { label: '无损', value: 999000, description: 'FLAC' }
+]
+
 export const usePlayerStore = defineStore('player', () => {
   // ============ State ============
-  const audio = ref<HTMLAudioElement | null>(null)
-  const currentSong = ref<ISong | null>(null)
-  const playlist = ref<ISong[]>([])
+  const audio = shallowRef<HTMLAudioElement | null>(null)
+  const playlist = shallowRef<ISong[]>([])
   const currentIndex = ref(-1)
   const isPlaying = ref(false)
   const progress = ref(0)
   const duration = ref(0)
-  const volume = ref(parseFloat(localStorage.getItem('volume') || '0.8'))
-  const playMode = ref<PlayMode>(parseInt(localStorage.getItem('playMode') || '0') as PlayMode)
+  const volume = ref(parseFloat(localStorage.getItem('volume') || String(DEFAULT_VOLUME)))
+  const playMode = ref<PlayMode>(getValidPlayMode())
   const isMuted = ref(false)
-  const lyrics = ref<ILyric[]>([])
+  const lyrics = shallowRef<ILyric[]>([])
   const currentLyricIndex = ref(-1)
   const isLoading = ref(false)
-  const playHistory = ref<ISong[]>(JSON.parse(localStorage.getItem('playHistory') || '[]'))
   const failedSongs = ref<Set<number>>(new Set())
-  
-  // 私人FM状态
-  const isPersonalFM = ref(false)
-  const fmPlaylist = ref<ISong[]>([])
-  const fmHistory = ref<ISong[]>([])
-  const fmIndex = ref(0)
-  
-  // 从localStorage恢复播放状态
-  const restorePlayerState = async () => {
-    try {
-      const savedState = localStorage.getItem('playerState')
-      if (savedState) {
-        const state = JSON.parse(savedState)
-        currentSong.value = state.currentSong || null
-        playlist.value = state.playlist || []
-        currentIndex.value = state.currentIndex || -1
-        progress.value = state.progress || 0
-        duration.value = state.duration || 0
-        isPlaying.value = state.isPlaying || false
-        lyrics.value = state.lyrics || []
-        currentLyricIndex.value = state.currentLyricIndex || -1
+  const currentQuality = ref(getValidQuality())
 
-        initAudio();
-        isLoading.value = true;
-        isPlaying.value = false;
-        const urlt = await api.getSongUrl(currentSong.value!.id, 320000);
-        const url = urlt.data?.[0].url;
-        if (!url) {
-          isLoading.value = false;
-          await next();
-          return;
-        }
-        audio.value!.src = url;
+  // 私人FM相关状态（仅保留必要的）
+  const fmHistory = shallowRef<ISong[]>([])
+  const fmNextBatch = shallowRef<ISong[]>([]) // 预加载下一批FM歌曲
 
-        updateMediaSessionMetadata(currentSong.value!);
-      }
-    } catch (error) {
-      console.error('恢复播放状态失败:', error)
-    }
+  // ============ Getters ============
+  const currentSong = computed(() => playlist.value[currentIndex.value])
+  const isPersonalFM = computed(() => playMode.value === PlayModeEnum.PersonalFM)
+  const hasCurrentSong = computed(() => currentIndex.value >= 0 && currentSong.value !== undefined)
+  const playlistCount = computed(() => playlist.value.length)
+  const isEmptyPlaylist = computed(() => playlistCount.value === 0)
+  const currentProgressPercent = computed(() => duration.value > 0 ? (progress.value / duration.value) * 100 : 0)
+  const currentLyric = computed(() => lyrics.value[currentLyricIndex.value] || null)
+  const canPlay = computed(() => hasCurrentSong.value && !failedSongs.value.has(currentSong.value!.id))
+  const qualityOptions = computed(() => QUALITY_OPTIONS)
+  const currentQualityOption = computed(() =>
+    QUALITY_OPTIONS.find(opt => opt.value === currentQuality.value) || QUALITY_OPTIONS[0]
+  )
+
+  // ============ 工具函数 ============
+  function getValidPlayMode(): PlayMode {
+    const saved = parseInt(localStorage.getItem('playMode') || String(DEFAULT_PLAY_MODE))
+    return (saved >= 0 && saved <= 3) ? saved as PlayMode : DEFAULT_PLAY_MODE
   }
-  
-  // 保存播放状态到localStorage
-  const savePlayerState = () => {
+
+  function getValidQuality(): number {
+    const saved = parseInt(localStorage.getItem('audioQuality') || String(DEFAULT_QUALITY))
+    return QUALITY_OPTIONS.some(opt => opt.value === saved) ? saved : DEFAULT_QUALITY
+  }
+
+  function savePlayerState() {
     try {
-      const state = {
-        currentSong: currentSong.value,
+      const state: PlayerState = {
         playlist: playlist.value,
         currentIndex: currentIndex.value,
         progress: progress.value,
@@ -82,333 +96,342 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
-  // ============ Getters ============
-  const hasCurrentSong = computed(() => !!currentSong.value)
-  const playlistCount = computed(() => playlist.value.length)
-  const isEmptyPlaylist = computed(() => playlist.value.length === 0)
-  
-  const currentProgressPercent = computed(() => {
-    if (duration.value === 0) return 0
-    return (progress.value / duration.value) * 100
-  })
+  async function restorePlayerState() {
+    try {
+      const saved = localStorage.getItem('playerState')
+      if (!saved) return
 
-  const currentLyric = computed(() => {
-    if (currentLyricIndex.value >= 0 && currentLyricIndex.value < lyrics.value.length) {
-      return lyrics.value[currentLyricIndex.value]
+      const state: PlayerState = JSON.parse(saved)
+      playlist.value = state.playlist || []
+      currentIndex.value = state.currentIndex || -1
+      progress.value = state.progress || 0
+      duration.value = state.duration || 0
+      isPlaying.value = false // 恢复时不自动播放
+      lyrics.value = state.lyrics || []
+      currentLyricIndex.value = state.currentLyricIndex || -1
+
+      if (hasCurrentSong.value) {
+        await loadSong(currentSong.value!)
+      }
+    } catch (error) {
+      console.error('恢复播放状态失败:', error)
     }
-    return null
-  })
-
-  const canPlay = computed(() => {
-    if (!currentSong.value) return false
-    return !failedSongs.value.has(currentSong.value.id)
-  })
-
-  // ============ Actions ============
-  
-  // 初始化音频
-  const initAudio = () => {
-    if (audio.value) return
-    
-    audio.value = new Audio()
-    audio.value.volume = volume.value
-    
-    // 初始化Media Session API
-    initMediaSession()
-    
-    // 恢复播放状态
-    restorePlayerState()
-    
-    audio.value.addEventListener('timeupdate', () => {
-      if (audio.value) {
-        progress.value = audio.value.currentTime
-        updateCurrentLyric()
-        // 保存播放进度
-        savePlayerState()
-        // 更新Media Session的播放位置
-        updateMediaSessionPosition()
-      }
-    })
-    
-    audio.value.addEventListener('loadedmetadata', () => {
-      if (audio.value) {
-        duration.value = audio.value.duration
-        // 如果有保存的进度，恢复到该位置
-        if (progress.value > 0 && progress.value < duration.value) {
-          audio.value.currentTime = progress.value
-        }
-      }
-    })
-    
-    audio.value.addEventListener('ended', () => {
-      handleSongEnded()
-    })
-    
-    audio.value.addEventListener('error', () => {
-      handlePlayError()
-    })
-    
-    audio.value.addEventListener('waiting', () => {
-      isLoading.value = true
-    })
-    
-    audio.value.addEventListener('canplay', () => {
-      isLoading.value = false
-    })
   }
 
-  // 播放歌曲
-  const play = async (song: ISong, playNow = true) => {
-    initAudio()
-    
+  // ============ 音频核心函数 ============
+  function initAudio() {
+    if (audio.value) return
+
+    audio.value = new Audio()
+    audio.value.volume = volume.value
+    audio.value.muted = isMuted.value
+
+    // 事件监听
+    audio.value.addEventListener('timeupdate', handleTimeUpdate)
+    audio.value.addEventListener('loadedmetadata', handleLoadedMetadata)
+    audio.value.addEventListener('ended', handleSongEnded)
+    audio.value.addEventListener('error', handlePlayError)
+    audio.value.addEventListener('waiting', () => isLoading.value = true)
+    audio.value.addEventListener('canplay', () => isLoading.value = false)
+
+    initMediaSession()
+    restorePlayerState()
+  }
+
+  function handleTimeUpdate() {
+    if (!audio.value) return
+    progress.value = audio.value.currentTime
+    updateCurrentLyric()
+    savePlayerState()
+    updateMediaSessionPosition()
+  }
+
+  function handleLoadedMetadata() {
+    if (!audio.value) return
+    duration.value = audio.value.duration
+
+    // 恢复播放进度
+    if (progress.value > 0 && progress.value < duration.value) {
+      audio.value.currentTime = progress.value
+    }
+  }
+
+  async function loadSong(song: ISong) {
     if (!audio.value) return
 
-    // 检查歌曲是否可用
-    // try {
-    //   const checkRes = await api.checkMusic(song.id)
-    //   if (!checkRes.success) {
-    //     throw new Error(checkRes.message || '歌曲不可用')
-    //   }
-    // } catch (error) {
-    //   console.warn('歌曲检查失败，尝试播放:', song.name)
-    // }
-
-    isLoading.value = true
-    
     try {
-      // 获取歌曲URL
-      const urlRes = await api.getSongUrl(song.id, 320000)
-      const songData = urlRes.data?.[0]
-      
-      if (!songData?.url) {
+      isLoading.value = true
+      const url = await getAudioUrl(song.id)
+
+      if (!url) {
         throw new Error('无法获取播放地址')
       }
 
-      // 设置音频源
-      audio.value.src = songData.url
-      currentSong.value = song
-      
-      // 更新播放列表中的索引
+      audio.value.src = url
+      await fetchLyric(song.id)
+      updateMediaSessionMetadata(song)
+      failedSongs.value.delete(song.id)
+    } catch (error) {
+      console.error('加载歌曲失败:', error)
+      failedSongs.value.add(song.id)
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // ============ 播放控制 ============
+  async function play(song: ISong, immediate = true) {
+    initAudio()
+    if (!audio.value) return
+
+    try {
+      // 添加到播放列表
       const index = playlist.value.findIndex(s => s.id === song.id)
       if (index === -1) {
-        // 如果歌曲不在播放列表中，添加到当前位置
         playlist.value.splice(currentIndex.value + 1, 0, song)
         currentIndex.value = currentIndex.value + 1
       } else {
         currentIndex.value = index
       }
 
-      // 获取歌词
-      await fetchLyric(song.id)
+      await loadSong(song)
 
-      // 更新Media Session
-      updateMediaSessionMetadata(song)
-
-      // 添加到播放历史
-      addToHistory(song)
-
-      // 播放
-      if (playNow) {
+      if (immediate) {
         await audio.value.play()
         isPlaying.value = true
+        updateMediaSessionPlaybackState()
       }
 
-      failedSongs.value.delete(song.id)
-      
-      // 保存播放状态
       savePlayerState()
     } catch (error) {
       console.error('播放失败:', error)
-      failedSongs.value.add(song.id)
-      // 自动切换到下一首
-      if (playNow) {
-        next()
-      }
-    } finally {
-      isLoading.value = false
+      await next()
     }
   }
 
-  // 播放指定索引的歌曲
-  const playAtIndex = async (index: number) => {
+  async function playAtIndex(index: number) {
     if (index < 0 || index >= playlist.value.length) return
     currentIndex.value = index
     await play(playlist.value[index])
   }
 
-  // 切换播放/暂停
-  const togglePlay = async () => {
-    if (!audio.value || !currentSong.value) return
-    
+  async function togglePlay() {
+    if (!audio.value || !hasCurrentSong.value) return
+
     if (isPlaying.value) {
-      audio.value.pause()
-      isPlaying.value = false
+      pause()
     } else {
       try {
         await audio.value.play()
         isPlaying.value = true
+        updateMediaSessionPlaybackState()
+        savePlayerState()
       } catch (error) {
         console.error('播放失败:', error)
-        next()
+        await next()
       }
     }
-    
-    // 更新Media Session的播放状态
-    updateMediaSessionPlaybackState()
-    
-    // 保存播放状态
-    savePlayerState()
   }
 
-  // 暂停
-  const pause = () => {
-    if (audio.value) {
+  function pause() {
+    if (audio.value && isPlaying.value) {
       audio.value.pause()
       isPlaying.value = false
-      // 保存播放状态
+      updateMediaSessionPlaybackState()
       savePlayerState()
     }
   }
 
-  // 下一首
-  const next = async () => {
-    // 如果是私人FM模式
+  async function handleFMNext() {
+    // 检查是否还有下一首
+    if (currentIndex.value < playlist.value.length - 1) {
+      // 直接播放下一首
+      await playAtIndex(currentIndex.value + 1)
+    } else {
+      // 需要获取新的FM歌曲
+      await fetchFMSongs()
+
+      // 获取成功后播放新的一首
+      if (playlist.value.length > currentIndex.value + 1) {
+        await playAtIndex(currentIndex.value + 1)
+      } else {
+        // 如果获取失败，停止FM
+        console.warn('无法获取更多FM歌曲')
+        stopPersonalFM()
+      }
+    }
+  }
+
+  async function next() {
+    if (isEmptyPlaylist.value) return
+
+    // 私人FM特殊处理
     if (isPersonalFM.value) {
-      await playNextFM()
+      await handleFMNext()
       return
     }
-    
-    if (playlist.value.length === 0) return
-    
-    let nextIndex: number
-    
-    switch (playMode.value) {
-      case PlayModeEnum.Random:
-        nextIndex = Math.floor(Math.random() * playlist.value.length)
-        break
-      case PlayModeEnum.Loop:
-        nextIndex = currentIndex.value
-        break
-      case PlayModeEnum.Sequence:
-      default:
-        nextIndex = currentIndex.value + 1
-        if (nextIndex >= playlist.value.length) {
-          nextIndex = 0
-        }
-        break
-    }
-    
+
+    let nextIndex = getNextIndex()
     await playAtIndex(nextIndex)
   }
 
-  // 上一首
-  const prev = async () => {
-    if (playlist.value.length === 0) return
-    
-    let prevIndex: number
-    
-    switch (playMode.value) {
-      case PlayModeEnum.Random:
-        prevIndex = Math.floor(Math.random() * playlist.value.length)
-        break
-      case PlayModeEnum.Loop:
-        prevIndex = currentIndex.value
-        break
-      case PlayModeEnum.Sequence:
-      default:
-        prevIndex = currentIndex.value - 1
-        if (prevIndex < 0) {
-          prevIndex = playlist.value.length - 1
-        }
-        break
-    }
-    
+  async function prev() {
+    if (isEmptyPlaylist.value || isPersonalFM.value) return
+
+    let prevIndex = getPrevIndex()
     await playAtIndex(prevIndex)
   }
 
-  // 设置播放进度
-  const seek = (time: number) => {
+  function getNextIndex(): number {
+    if (isEmptyPlaylist.value) return -1
+
+    switch (playMode.value) {
+      case PlayModeEnum.Random:
+        return Math.floor(Math.random() * playlist.value.length)
+      case PlayModeEnum.Loop:
+        return currentIndex.value
+      case PlayModeEnum.Sequence:
+      default:
+        const next = currentIndex.value + 1
+        return next >= playlist.value.length ? 0 : next
+    }
+  }
+
+  function getPrevIndex(): number {
+    if (isEmptyPlaylist.value) return -1
+
+    switch (playMode.value) {
+      case PlayModeEnum.Random:
+        return Math.floor(Math.random() * playlist.value.length)
+      case PlayModeEnum.Loop:
+        return currentIndex.value
+      case PlayModeEnum.Sequence:
+      default:
+        const prev = currentIndex.value - 1
+        return prev < 0 ? playlist.value.length - 1 : prev
+    }
+  }
+
+  function seek(time: number) {
     if (audio.value && duration.value > 0) {
-      audio.value.currentTime = Math.max(0, Math.min(time, duration.value))
-      progress.value = audio.value.currentTime
-      
-      // 更新Media Session的播放位置
+      const validTime = Math.max(0, Math.min(time, duration.value))
+      audio.value.currentTime = validTime
+      progress.value = validTime
       updateMediaSessionPosition()
     }
   }
 
-  // 设置音量
-  const setVolume = (val: number) => {
-    volume.value = Math.max(0, Math.min(1, val))
+  function setVolume(val: number) {
+    const newVolume = Math.max(0, Math.min(1, val))
+    volume.value = newVolume
+
     if (audio.value) {
-      audio.value.volume = volume.value
+      audio.value.volume = newVolume
     }
-    localStorage.setItem('volume', String(volume.value))
+
+    localStorage.setItem('volume', String(newVolume))
   }
 
-  // 切换静音
-  const toggleMute = () => {
+  function toggleMute() {
     if (!audio.value) return
     isMuted.value = !isMuted.value
     audio.value.muted = isMuted.value
   }
 
-  // 切换播放模式
-  const togglePlayMode = () => {
-    // 私人FM模式下禁止切换播放模式
-    if (isPersonalFM.value) return
-    
-    playMode.value = ((playMode.value + 1) % 3) as PlayMode
-    localStorage.setItem('playMode', String(playMode.value))
+  function togglePlayMode() {
+    // 循环切换：Sequence -> Random -> Loop -> Sequence
+    // PersonalFM需要特殊处理
+    if (playMode.value === PlayModeEnum.PersonalFM) {
+      stopPersonalFM()
+    }
+
+    let nextMode: PlayMode
+    switch (playMode.value) {
+      case PlayModeEnum.Sequence:
+        nextMode = PlayModeEnum.Random
+        break
+      case PlayModeEnum.Random:
+        nextMode = PlayModeEnum.Loop
+        break
+      case PlayModeEnum.Loop:
+      default:
+        nextMode = PlayModeEnum.Sequence
+    }
+
+    playMode.value = nextMode
+    localStorage.setItem('playMode', String(nextMode))
   }
 
-  // 设置播放列表
-  const setPlaylist = (songs: ISong[], startIndex = 0) => {
+  // ============ 播放列表管理 ============
+  function setPlaylist(songs: ISong[], startIndex = 0) {
+    if (isPersonalFM.value) {
+      stopPersonalFM()
+    }
+
     playlist.value = [...songs]
     failedSongs.value.clear()
+
     if (songs.length > 0 && startIndex >= 0 && startIndex < songs.length) {
       playAtIndex(startIndex)
     }
-    // 保存播放状态
+
     savePlayerState()
   }
 
-  // 添加歌曲到播放列表
-  const addToPlaylist = (song: ISong) => {
-    const index = playlist.value.findIndex(s => s.id === song.id)
-    if (index === -1) {
+  function addToPlaylist(song: ISong) {
+    if (!playlist.value.find(s => s.id === song.id)) {
       playlist.value.push(song)
-      // 保存播放状态
       savePlayerState()
     }
   }
 
-  // 从播放列表移除歌曲
-  const removeFromPlaylist = (index: number) => {
+  function removeFromPlaylist(index: number) {
     if (index < 0 || index >= playlist.value.length) return
-    
-    playlist.value.splice(index, 1)
-    
+
+    const [removed] = playlist.value.splice(index, 1)
+    failedSongs.value.delete(removed.id)
+
     if (currentIndex.value === index) {
       if (playlist.value.length > 0) {
         next()
       } else {
-        currentSong.value = null
-        currentIndex.value = -1
-        progress.value = 0
-        duration.value = 0
-        lyrics.value = []
+        clearPlayer()
       }
     } else if (currentIndex.value > index) {
       currentIndex.value--
     }
-    
-    // 保存播放状态
+
     savePlayerState()
   }
 
-  // 获取歌词
-  const fetchLyric = async (songId: number) => {
+  function clearPlaylist() {
+    if (isPersonalFM.value) {
+      stopPersonalFM()
+    }
+
+    clearPlayer()
+    savePlayerState()
+  }
+
+  function clearPlayer() {
+    playlist.value = []
+    currentIndex.value = -1
+    progress.value = 0
+    duration.value = 0
+    isPlaying.value = false
+    lyrics.value = []
+    currentLyricIndex.value = -1
+    failedSongs.value.clear()
+
+    if (audio.value) {
+      audio.value.pause()
+      audio.value.src = ''
+    }
+  }
+
+  // ============ 歌词处理 ============
+  async function fetchLyric(songId: number) {
     try {
       const res = await api.getLyric(songId)
       if (res.lrc?.lyric) {
@@ -422,253 +445,186 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
-  // 更新当前歌词索引
-  const updateCurrentLyric = () => {
+  function updateCurrentLyric() {
     if (lyrics.value.length === 0) {
       currentLyricIndex.value = -1
       return
     }
-    
+
     const currentTime = progress.value
-    let index = lyrics.value.findIndex((lyric, i) => {
+    let index = -1
+
+    for (let i = 0; i < lyrics.value.length; i++) {
+      const lyric = lyrics.value[i]
       const nextLyric = lyrics.value[i + 1]
-      return lyric.time <= currentTime && (!nextLyric || nextLyric.time > currentTime)
-    })
-    
-    if (index === -1) {
-      index = 0
+
+      if (lyric.time <= currentTime && (!nextLyric || nextLyric.time > currentTime)) {
+        index = i
+        break
+      }
     }
-    
-    currentLyricIndex.value = index
+
+    currentLyricIndex.value = index === -1 ? 0 : index
   }
 
-  // 处理歌曲结束
-  const handleSongEnded = () => {
-    if (playMode.value === PlayModeEnum.Loop) {
-      if (audio.value) {
-        audio.value.currentTime = 0
-        audio.value.play()
-      }
+  // ============ 歌曲播放事件处理 ============
+  function handleSongEnded() {
+    if (playMode.value === PlayModeEnum.Loop && audio.value) {
+      audio.value.currentTime = 0
+      audio.value.play()
     } else {
       next()
     }
   }
 
-  // 处理播放错误
-  const handlePlayError = () => {
+  function handlePlayError() {
     console.error('音频播放错误')
     isLoading.value = false
+
     if (currentSong.value) {
       failedSongs.value.add(currentSong.value.id)
     }
-    // 自动切换到下一首
-    setTimeout(() => {
-      next()
-    }, 1000)
+
+    setTimeout(() => next(), 1000)
   }
 
-  // 添加到播放历史
-  const addToHistory = (song: ISong) => {
-    const index = playHistory.value.findIndex(s => s.id === song.id)
-    if (index > -1) {
-      playHistory.value.splice(index, 1)
-    }
-    playHistory.value.unshift(song)
-    if (playHistory.value.length > 100) {
-      playHistory.value = playHistory.value.slice(0, 100)
-    }
-    localStorage.setItem('playHistory', JSON.stringify(playHistory.value))
-  }
-
-  // 从播放历史播放
-  const playFromHistory = async (song: ISong) => {
-    await play(song)
-  }
-
-  // ============ 私人FM相关函数 ============
-  
-  // 启动私人FM
-  const startPersonalFM = async () => {
-    isPersonalFM.value = true
-    fmPlaylist.value = []
+  // ============ 私人FM处理 ============
+  async function startPersonalFM() {
+    playMode.value = PlayModeEnum.PersonalFM
     fmHistory.value = []
-    fmIndex.value = 0
-    
-    // 获取第一首FM歌曲
+    fmNextBatch.value = []
+
+    // 清空当前播放列表，为FM做准备
+    clearPlayer()
+
+    // 获取第一批FM歌曲
     await fetchFMSongs()
-    
-    if (fmPlaylist.value.length > 0) {
-      await playFMSong()
+
+    if (playlist.value.length > 0) {
+      await playAtIndex(0)
     }
   }
-  
-  // 停止私人FM
-  const stopPersonalFM = () => {
-    isPersonalFM.value = false
-    fmPlaylist.value = []
-    fmHistory.value = []
-    fmIndex.value = 0
+
+  function stopPersonalFM() {
+    // 切换到普通模式
+    playMode.value = DEFAULT_PLAY_MODE
+
+    // 保留FM历史记录，但清空预加载
+    fmNextBatch.value = []
   }
-  
-  // 获取FM歌曲
-  const fetchFMSongs = async () => {
+
+  async function fetchFMSongs() {
     try {
       const response = await api.getPersonalFM()
       if (response.code === 200 && response.data) {
-        // 添加到FM播放列表
-        fmPlaylist.value.push(...response.data)
+        // 添加到播放列表
+        playlist.value.push(...response.data)
+        // 保存到下一批预加载
+        fmNextBatch.value = [...response.data]
       }
     } catch (error) {
       console.error('获取私人FM失败:', error)
     }
   }
-  
-  // 播放FM歌曲
-  const playFMSong = async () => {
-    if (fmPlaylist.value.length === 0) {
-      await fetchFMSongs()
-      if (fmPlaylist.value.length === 0) {
-        console.error('没有可播放的FM歌曲')
-        return
+
+  async function playNextFM() {
+    // 如果已经到了当前批次的末尾
+    if (currentIndex.value >= playlist.value.length - 1) {
+      // 使用预加载的下一批
+      if (fmNextBatch.value.length > 0) {
+        playlist.value.push(...fmNextBatch.value)
+        fmNextBatch.value = []
+
+        // 预加载下一批
+        fetchFMSongs().catch(console.error)
+      } else {
+        // 没有预加载，立即获取
+        await fetchFMSongs()
       }
     }
-    
-    const song = fmPlaylist.value[fmIndex.value]
-    
-    // 添加到普通播放列表，方便生成歌单
-    if (!playlist.value.find(s => s.id === song.id)) {
-      playlist.value.push(song)
-    }
-    
-    // 添加到FM历史
-    if (!fmHistory.value.find(s => s.id === song.id)) {
-      fmHistory.value.push(song)
-    }
-    
-    await play(song)
+
+    await handleFMNext()
   }
-  
-  // 播放下一首FM歌曲
-  const playNextFM = async () => {
-    // 移动到下一首
-    fmIndex.value++
-    
-    // 如果当前FM列表已经播放完，获取新的FM歌曲
-    if (fmIndex.value >= fmPlaylist.value.length) {
-      await fetchFMSongs()
-      if (fmPlaylist.value.length === 0) {
-        console.error('没有可播放的FM歌曲')
-        stopPersonalFM()
-        return
-      }
-    }
-    
-    await playFMSong()
+
+  async function skipFMSong() {
+    if (!isPersonalFM.value) return
+    await playNextFM()
   }
-  
-  // 跳过当前FM歌曲
-  const skipFMSong = async () => {
-    if (isPersonalFM.value) {
-      await playNextFM()
+
+  async function trashFMSong() {
+    if (!isPersonalFM.value || !currentSong.value) return
+
+    try {
+      // 通知服务器不喜欢这首歌
+      await api.fmTrash(currentSong.value.id)
+    } catch (error) {
+      console.error('标记不喜欢失败:', error)
     }
-  }
-  
-  // 垃圾桶：不喜欢当前FM歌曲
-  const trashFMSong = async () => {
-    if (isPersonalFM.value && currentSong.value) {
-      // 从FM播放列表和历史中移除当前歌曲
-      fmPlaylist.value = fmPlaylist.value.filter(s => s.id !== currentSong.value!.id)
-      fmHistory.value = fmHistory.value.filter(s => s.id !== currentSong.value!.id)
-      
-      // 从普通播放列表中移除
-      playlist.value = playlist.value.filter(s => s.id !== currentSong.value!.id)
-      
-      // 播放下一首FM歌曲
-      await playNextFM()
+
+    // 记录到历史
+    fmHistory.value.push(currentSong.value)
+
+    // 从播放列表中移除当前歌曲
+    const index = playlist.value.findIndex(s => s.id === currentSong.value!.id)
+    if (index !== -1) {
+      removeFromPlaylist(index)
     }
+
+    // 播放下一首
+    await playNextFM()
   }
-  
+
   // ============ Media Session API ============
-  
-  // 初始化Media Session
-  const initMediaSession = () => {
+  function initMediaSession() {
     if (!('mediaSession' in navigator)) return
-    
+
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: '网易云音乐',
-      artist: 'NeWPlayer',
-      album: '在线音乐',
+      title: '音乐播放器',
+      artist: '正在等待播放...',
+      album: '',
       artwork: [
-        { src: '/favicon.webp', sizes: '96x96', type: 'image/webp' },
-        { src: '/favicon.webp', sizes: '128x128', type: 'image/webp' },
-        { src: '/favicon.webp', sizes: '192x192', type: 'image/webp' },
-        { src: '/favicon.webp', sizes: '256x256', type: 'image/webp' },
-        { src: '/favicon.webp', sizes: '384x384', type: 'image/webp' },
-        { src: '/favicon.webp', sizes: '512x512', type: 'image/webp' }
+        { src: '/favicon.ico', sizes: '96x96', type: 'image/x-icon' }
       ]
     })
-    
-    // 设置播放状态
-    navigator.mediaSession.playbackState = isPlaying.value ? 'playing' : 'paused'
-    
-    // 设置操作处理器
+
     navigator.mediaSession.setActionHandler('play', () => audio.value?.play())
-    navigator.mediaSession.setActionHandler('pause', () => audio.value?.pause());
-    navigator.mediaSession.setActionHandler('previoustrack', () => {
-      if (isPersonalFM.value) {
-        // 私人FM模式下没有上一首
-        return
-      }
-      prev()
-    })
+    navigator.mediaSession.setActionHandler('pause', () => audio.value?.pause())
+    navigator.mediaSession.setActionHandler('previoustrack', () => !isPersonalFM.value && prev())
     navigator.mediaSession.setActionHandler('nexttrack', next)
     navigator.mediaSession.setActionHandler('seekto', (details) => {
-      if (details.seekTime !== undefined) {
-        seek(details.seekTime)
-      }
+      if (details.seekTime !== undefined) seek(details.seekTime)
     })
     navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-      const seekTime = Math.max(0, progress.value - (details.seekOffset || 10))
-      seek(seekTime)
+      seek(progress.value - (details.seekOffset || 10))
     })
     navigator.mediaSession.setActionHandler('seekforward', (details) => {
-      const seekTime = Math.min(duration.value, progress.value + (details.seekOffset || 10))
-      seek(seekTime)
+      seek(progress.value + (details.seekOffset || 10))
     })
   }
-  
-  // 更新Media Session的元数据
-  const updateMediaSessionMetadata = (song: ISong) => {
+
+  function updateMediaSessionMetadata(song: ISong) {
     if (!('mediaSession' in navigator) || !song) return
-    
-    const imageUrl = song.picUrl || song.album?.picUrl || '/favicon.webp'
-    
+
+    const artwork = song.picUrl || song.album?.picUrl
+      ? [{ src: song.picUrl || song.album!.picUrl, sizes: '512x512', type: 'image/jpeg' }]
+      : []
+
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.name,
       artist: song.artists?.map(a => a.name).join(' / ') || '未知艺术家',
       album: song.album?.name || '未知专辑',
-      artwork: [
-        { src: imageUrl, sizes: '96x96', type: 'image/jpeg' },
-        { src: imageUrl, sizes: '128x128', type: 'image/jpeg' },
-        { src: imageUrl, sizes: '192x192', type: 'image/jpeg' },
-        { src: imageUrl, sizes: '256x256', type: 'image/jpeg' },
-        { src: imageUrl, sizes: '384x384', type: 'image/jpeg' },
-        { src: imageUrl, sizes: '512x512', type: 'image/jpeg' }
-      ]
+      artwork
     })
   }
-  
-  // 更新Media Session的播放状态
-  const updateMediaSessionPlaybackState = () => {
+
+  function updateMediaSessionPlaybackState() {
     if (!('mediaSession' in navigator)) return
-    
     navigator.mediaSession.playbackState = isPlaying.value ? 'playing' : 'paused'
   }
-  
-  // 更新Media Session的播放位置
-  const updateMediaSessionPosition = () => {
+
+  function updateMediaSessionPosition() {
     if (!('mediaSession' in navigator) || duration.value === 0) return
-    
+
     navigator.mediaSession.setPositionState({
       duration: duration.value,
       playbackRate: audio.value?.playbackRate || 1,
@@ -676,43 +632,52 @@ export const usePlayerStore = defineStore('player', () => {
     })
   }
 
-  // 清空播放列表
-  const clearPlaylist = () => {
-    playlist.value = []
-    currentIndex.value = -1
-    currentSong.value = null
-    progress.value = 0
-    duration.value = 0
-    isPlaying.value = false
-    lyrics.value = []
-    currentLyricIndex.value = -1
-    if (isPersonalFM.value) stopPersonalFM();
-    
-    if (audio.value) {
-      audio.value.pause()
-      audio.value.src = ''
+  // ============ 音质处理 ============
+  function setQuality(quality: number) {
+    if (!QUALITY_OPTIONS.some(opt => opt.value === quality)) return
+
+    currentQuality.value = quality
+    localStorage.setItem('audioQuality', quality.toString())
+
+    // 重新加载当前歌曲（如果正在播放）
+    if (hasCurrentSong.value && audio.value?.src) {
+      loadSong(currentSong.value!).catch(console.error)
     }
-    
-    // 保存播放状态
-    savePlayerState()
   }
 
-  // 播放歌单
-  const playPlaylist = async (songs: ISong[], startIndex = 0) => {
+  function getQualityDescription(quality: number) {
+    const option = QUALITY_OPTIONS.find(opt => opt.value === quality)
+    return option?.description || `${Math.floor(quality / 1000)}kbps`
+  }
+
+  async function getAudioUrl(songId: number): Promise<string> {
+    try {
+      const urlRes = await api.getSongUrl(songId, currentQuality.value)
+      return urlRes.data?.[0]?.url || ''
+    } catch (error) {
+      console.error('获取音频URL失败:', error)
+      return ''
+    }
+  }
+
+  // ============ 快捷操作 ============
+  async function playPlaylist(songs: ISong[], startIndex = 0) {
     if (songs.length === 0) return
-    if (isPersonalFM.value) stopPersonalFM()
     setPlaylist(songs, startIndex)
   }
 
-  // 播放专辑
-  const playAlbum = async (songs: ISong[], startIndex = 0) => {
+  async function playAlbum(songs: ISong[], startIndex = 0) {
     await playPlaylist(songs, startIndex)
   }
 
+  async function playFromHistory(song: ISong) {
+    await play(song)
+  }
+
+  // ============ 返回 ============
   return {
     // State
     audio,
-    currentSong,
     playlist,
     currentIndex,
     isPlaying,
@@ -724,20 +689,23 @@ export const usePlayerStore = defineStore('player', () => {
     lyrics,
     currentLyricIndex,
     isLoading,
-    playHistory,
     failedSongs,
-    // 私人FM状态
-    isPersonalFM,
-    fmPlaylist,
+    currentQuality,
+    // FM状态（简化）
     fmHistory,
-    fmIndex,
+
     // Getters
+    currentSong,
+    isPersonalFM,
     hasCurrentSong,
     playlistCount,
     isEmptyPlaylist,
     currentProgressPercent,
     currentLyric,
     canPlay,
+    qualityOptions,
+    currentQualityOption,
+
     // Actions
     initAudio,
     play,
@@ -758,22 +726,25 @@ export const usePlayerStore = defineStore('player', () => {
     updateCurrentLyric,
     handleSongEnded,
     handlePlayError,
-    addToHistory,
     playFromHistory,
     playPlaylist,
     playAlbum,
-    // 私人FM相关函数
+
+    // 音质相关
+    setQuality,
+    getQualityDescription,
+    getAudioUrl,
+
+    // 私人FM相关
     startPersonalFM,
     stopPersonalFM,
-    fetchFMSongs,
-    playFMSong,
-    playNextFM,
     skipFMSong,
     trashFMSong,
-    // Media Session API相关函数
+
+    // Media Session
     initMediaSession,
     updateMediaSessionMetadata,
     updateMediaSessionPlaybackState,
-    updateMediaSessionPosition,
+    updateMediaSessionPosition
   }
 })

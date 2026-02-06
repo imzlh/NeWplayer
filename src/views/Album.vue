@@ -28,7 +28,7 @@
             <img :src="getImageUrl(album.artist?.picUrl, 40, 40)" :alt="album.artist?.name" class="artist-avatar"/>
             <span class="artist-name">{{ album.artist?.name }}</span>
           </div>
-          <p class="detail-time">{{ formatDate(album.publishTime, 'YYYY-MM-DD') }} 发布</p>
+          <p class="detail-time">{{ formatDate(album.publishTime!, 'YYYY-MM-DD') }} 发布</p>
         </div>
       </section>
       
@@ -90,7 +90,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
-import type { IAlbum as AlbumType, ISong } from '@/types'
+import type { IAlbum as AlbumType, ISong } from '@/api/types'
 import { getImageUrl, formatDate } from '@/utils/lyric'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
@@ -102,7 +102,7 @@ const playerStore = usePlayerStore()
 const userStore = useUserStore()
 
 const albumId = computed(() => Number(route.params.id))
-const album = ref<AlbumType>({ id: 0, name: '', picUrl: '', publishTime: 0 })
+const album = ref<Partial<AlbumType>>({ id: 0, name: '', picUrl: '', publishTime: 0 })
 const songs = ref<ISong[]>([])
 const loading = ref(false)
 const headerScrolled = ref(false)

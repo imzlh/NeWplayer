@@ -20,6 +20,11 @@ export default defineConfig({
       '/cgi-bin/': {
         target: 'http://192.168.1.1/',  // 确保这是正确的 API 地址
         changeOrigin: true,
+        rewrite(path){
+          const url = new URL(path, 'http://192.168.1.1/');
+          url.pathname += '.php';
+          return url.pathname + url.search;
+        }
       }
     },
   },

@@ -1,4 +1,4 @@
-import type { ILyric } from '@/types'
+import type { ILyric } from '@/api/types'
 // import I_DEFAULT from 'public/'
 
 // 解析歌词

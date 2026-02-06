@@ -61,11 +61,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, shallowRef } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
-import type { IPlaylist } from '@/types'
+import type { IPlaylist } from '@/api/types'
 import { getImageUrl } from '@/utils/lyric'
 import Loading from '@/components/Loading.vue'
 
@@ -73,7 +73,7 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const playlists = ref<IPlaylist[]>([])
+const playlists = shallowRef<IPlaylist[]>([])
 const loading = ref(false)
 // 从URL参数中获取当前tab状态
 const currentTab = ref((route.query.tab as string) || 'created')
@@ -85,14 +85,14 @@ const filteredPlaylists = computed(() => {
   if (currentTab.value === 'created') {
     // 创建的歌单：用户是创建者且不是收藏歌单
     return playlists.value.filter(p => 
-      (p as any).userId === userStore.userId && 
-      !(p as any).specialType
+      p.userId === userStore.userId && 
+      !p.specialType
     )
   } else {
     // 收藏的歌单：用户不是创建者或者是收藏歌单
     return playlists.value.filter(p => 
-      (p as any).userId !== userStore.userId || 
-      (p as any).specialType === 5
+      p.userId !== userStore.userId || 
+      p.specialType === 5
     )
   }
 })

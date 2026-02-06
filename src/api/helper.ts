@@ -1,4 +1,4 @@
-import { ISong, ISongDetail } from "@/types";
+import { ISong, ISongDetail } from "@/api/types";
 
 export const songDetail2Song = (songd: ISongDetail): ISong => ({
     id: songd.id,

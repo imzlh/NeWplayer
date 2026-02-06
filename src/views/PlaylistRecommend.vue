@@ -70,7 +70,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as api from '@/api'
-import type { IPlaylist, IPlaylistType } from '@/types'
+import type { IPlaylistType } from '@/api/types'
 import Loading from '@/components/Loading.vue'
 import { showAction } from '@/stores/action'
 
@@ -78,7 +78,12 @@ const router = useRouter()
 const route = useRoute()
 
 // 状态
-const playlists = ref<IPlaylist[]>([])
+const playlists = ref<{
+  id: number,
+  name: string,
+  coverImgUrl: string,
+  playCount: number,
+}[]>([])
 const categories = ref<IPlaylistType[]>([])
 // 从URL参数中获取当前分类
 const currentCategory = ref((route.query.cat as string) || '全部')
@@ -180,12 +185,12 @@ const switchCategory = (cat: string) => {
       showAction(categories.value.map((cat: IPlaylistType) => ({
         key: cat.type,
         label: cat.name,
-        value: cat.type
-      })), opt => {
-        currentCategory.value = opt.value
-        updateURL()
-        fetchPlaylists(true)
-      });
+        callback: () => {
+          currentCategory.value = cat.type.toString()
+          updateURL()
+          fetchPlaylists(true)
+        }
+      })));
     }
     return;
   }

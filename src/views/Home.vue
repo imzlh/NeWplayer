@@ -123,7 +123,7 @@ import { ref, reactive, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import * as api from '@/api'
-import type { IBanner, IPlaylist, IArtist, ISong } from '@/types'
+import type { IBanner, IPlaylist, IArtist, ISong } from '@/api/types'
 import { getImageUrl } from '@/utils/lyric'
 
 import Banner from '@/components/Banner.vue'
@@ -282,27 +282,22 @@ const showOptions = (_e: MouseEvent) => {
     {
       label: document.fullscreenElement ? '退出全屏' : '全屏',
       icon: document.fullscreenElement ? svg['exit-fullscreen'] : svg.fullscreen,
-      value: 'fullscreen'
-    },
-    {
-      label: 'UI设置',
-      icon: svg.setting,
-      value: 'settings'
-    }
-  ], o => {
-    switch (o.value) {
-      case 'fullscreen':
+      callback: () => {
         if (document.fullscreenElement) {
           document.exitFullscreen()
         } else {
           document.documentElement.requestFullscreen()
         }
-        break
-      case 'settings':
+      }
+    },
+    {
+      label: 'UI设置',
+      icon: svg.setting,
+      callback: () => {
         showSettings?.();
-        break
+      }
     }
-  });
+  ]);
 }
 
 // 跳转方法
@@ -380,7 +375,7 @@ onMounted(() => {
 }
 
 .home-content {
-  padding: $spacing-md $spacing-lg;
+  padding: $spacing-xs $spacing-md;
 }
 
 .section-banner {

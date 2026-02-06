@@ -290,7 +290,7 @@ const checkQRStatus = async () => {
         // 获取登录状态
         const statusRes = await api.getLoginStatus()
         if (statusRes.data?.profile) {
-          userStore.setUser(statusRes.data.profile)
+          userStore.setUser({ ...statusRes.data.account, ...statusRes.data.profile })
           const redirect = route.query.redirect as string
           router.push(redirect || '/')
         }

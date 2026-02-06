@@ -1,3 +1,7 @@
+/**
+ * Nest
+ */
+
 import { songDetail2Song } from './helper'
 import { get } from './request'
 import type {
@@ -10,15 +14,27 @@ import type {
   IAlbum,
   IBanner,
   IRecommendPlaylist,
-  IDailySong,
   IHotSearch,
   IComment,
-  IMV, ISearchSuggest,
+  IMV,
   IPlaylistType,
   CommentResponse,
   IToplist,
-  ISongDetail
-} from '@/types'
+  ISongDetail,
+  IDailyRecommendReason,
+  ISongUrl,
+  ISongPersonalized,
+  IUserCountInfo,
+  IHistory,
+  IDJProgram,
+  IPrivilege,
+  IVideo,
+  ITagItem,
+  ISong2,
+  IUserState,
+  IUserEvent,
+  IMatch
+} from '@/api/types'
 
 const nocache = true;
 
@@ -65,7 +81,7 @@ export const refreshLogin = (): Promise<ApiResponse> => {
 }
 
 // 获取登录状态
-export const getLoginStatus = (): Promise<ApiResponse<{ profile: IUser; account: any }>> => {
+export const getLoginStatus = (): Promise<ApiResponse<{ profile: IUser; account: IUserState }>> => {
   return get('/login/status', { nocache })
 }
 
@@ -77,39 +93,49 @@ export const logout = (): Promise<ApiResponse> => {
 // ==================== 用户相关 ====================
 
 // 获取用户详情
-export const getUserDetail = (uid: number): Promise<ApiResponse<{ profile: IUser; level: number; listenSongs: number }>> => {
+export const getUserDetail = (uid: number): Promise<ApiResponse & { profile: IUser; level: number; listenSongs: number, peopleCanSeeMyPlayRecord: boolean }> => {
   return get('/user/detail', { uid })
 }
 
+// 用户follower
+export const getUserFollower = (uid: number, limit = 30, offset = 0): Promise<ApiResponse & { more: boolean, size: number, followeds: IUser[] }> => 
+  get('/user/followeds', { uid, limit, offset })
+
+// follows
+export const getUserFollows = (uid: number, limit = 30, offset = 0): Promise<ApiResponse & { more: boolean, size: number, follow: IUser[] }> => 
+  get('/user/follows', { uid, limit, offset })
+
+// 关注/取消关注, 1=关注, 0=取消
+export const followUser = (id: number, t: number = 1): Promise<ApiResponse> => {
+  return get('/follow', { id, t, nocache })
+}
+
+// 用户动态
+export const getUserEvent = (uid: number, limit = 30, lasttime = 0): Promise<ApiResponse & { more: boolean, size: number, lasttime: number, events: IUserEvent[] }> => 
+  get('/user/event', { uid, limit, lasttime, nocache })
+
 // 获取用户信息
-export const getUserSubcount = (): Promise<ApiResponse> => {
+export const getUserSubcount = (): Promise<ApiResponse & IUserCountInfo> => {
   return get('/user/subcount', { nocache })
 }
 
 // 获取用户歌单
-export const getUserPlaylist = (uid: number, limit = 30, offset = 0): Promise<ApiResponse<{ playlist: IPlaylist[] }>> => {
+export const getUserPlaylist = (uid: number, limit = 30, offset = 0): Promise<ApiResponse<{ playlist: IPlaylist[], more: boolean }>> => {
   return get('/user/playlist', { uid, limit, offset, nocache })
 }
 
-// 获取用户播放记录
-export const getUserRecord = (uid: number, type = 0): Promise<ApiResponse<{ allData?: any[]; weekData?: any[] }>> => {
+// 获取用户播放记录, 0=all, 1=week
+export const getUserRecord = (uid: number, type = 0): Promise<ApiResponse & { allData?: IHistory[] }> => {
   return get('/user/record', { uid, type, nocache })
 }
 
 // 获取用户电台
-export const getUserDJ = (uid: number): Promise<ApiResponse> => {
+export const getUserDJ = (uid: number): Promise<ApiResponse & { count: number, more: boolean, programs: IDJProgram[] }> => {
   return get('/user/dj', { uid, nocache })
 }
 
 // 更新用户信息
-export const updateUserProfile = (data: {
-  gender?: number
-  birthday?: number
-  nickname?: string
-  province?: number
-  city?: number
-  signature?: string
-}): Promise<ApiResponse> => {
+export const updateUserProfile = (data: Partial<IUserState>): Promise<ApiResponse> => {
   return get('/user/update', { ...data, nocache })
 }
 
@@ -121,62 +147,62 @@ export const getSongDetail = (ids: number | number[]): Promise<ApiResponse<{ son
   return get('/song/detail', { ids: idStr })
 }
 
-export const getSongDetail2 = (ids: number | number[]): Promise<ApiResponse<{ songs: ISong[]; privileges: any[] }>> => 
+export const getSongDetail2 = (ids: number | number[]): Promise<ApiResponse<{ songs: ISong[]; privileges: IPrivilege[] }>> => 
   getSongDetail(ids).then(res => ({
     code: res.code,
     songs: res.songs.map(songDetail2Song),
     privileges: res.privileges,
-  }))
+  })) as any
 
 // 获取歌曲URL
-export const getSongUrl = (id: number, br = 999000): Promise<ApiResponse<{ id: number; url: string; br: number; size: number; type: string; code: number }[]>> => {
+export const getSongUrl = (id: number, br = 999000): Promise<ApiResponse<ISongUrl[]>> => {
   return get('/song/url', { id, br })
 }
 
 // 检查音乐是否可用
-export const checkMusic = (id: number, br = 999000): Promise<ApiResponse<{ success: boolean; message: string }>> => {
+export const checkMusic = (id: number, br = 999000): Promise<ApiResponse & { success: boolean; message: string }> => {
   return get('/check/music', { id, br })
 }
 
 // 获取歌词
-export const getLyric = (id: number): Promise<ApiResponse<{ lrc?: { lyric: string }; tlyric?: { lyric: string }; nolyric?: boolean; uncollected?: boolean }>> => {
+export const getLyric = (id: number): Promise<ApiResponse & { lrc: { lyric?: string }; tlyric: { lyric?: string }; romalrc: { lyric?: string } }> => {
   return get('/lyric', { id })
 }
 
 // 喜欢音乐
-export const likeSong = (id: number, like = true): Promise<ApiResponse> => {
+export const likeSong = (id: number, like = true): Promise<ApiResponse & { playlistId: number }> => {
   return get('/like', { id, like, nocache })
 }
 
 // 获取喜欢音乐列表
-export const getLikeList = (uid: number): Promise<ApiResponse<{ ids: number[]; checkPoint: number }>> => {
+export const getLikeList = (uid: number): Promise<ApiResponse & { ids: number[]; checkPoint: number }> => {
   return get('/likelist', { uid, nocache })
 }
 
 // 获取相似音乐
-export const getSimiSong = (id: number): Promise<ApiResponse<{ songs: ISong[] }>> => {
+export const getSimiSong = (id: number): Promise<ApiResponse & { songs: ISong[] }> => {
   return get('/simi/song', { id, nocache })
 }
 
 // ==================== 歌单相关 ====================
 
 // 获取歌单详情
-export const getPlaylistDetail = (id: number, s = 8): Promise<{ playlist: IPlaylist; privileges: any[] }> => {
+export const getPlaylistDetail = (id: number, s = 8): Promise<ApiResponse & { playlist: IPlaylist; privileges: IPrivilege[]; relatedVideos?: IVideo[] }> => {
   return get('/playlist/detail', { id, s })
 }
 
 // 获取歌单所有歌曲
-export const getPlaylistTracks = (id: number, limit = 1000, offset = 0): Promise<ApiResponse<{ songs: ISong[]; privileges: any[] }>> => {
+export const getPlaylistTracks = (id: number, limit = 1000, offset = 0): Promise<ApiResponse & { songs: ISong[]; privileges: IPrivilege[] }> => {
   return get('/playlist/track/all', { id, limit, offset })
 }
 
 // 获取精品歌单
-export const getHighQualityPlaylists = (cat = '全部', limit = 20, before?: number): Promise<ApiResponse<{ playlists: IPlaylist[]; lasttime: number; more: boolean; total: number }>> => {
+export const getHighQualityPlaylists = (cat = '全部', limit = 20, before?: number): Promise<ApiResponse & { playlists: IPlaylist[]; lasttime: number; more: boolean; total: number }> => {
   return get('/top/playlist/highquality', { cat, limit, before })
 }
 
 // 获取网友精选碟歌单
-export const getTopPlaylists = (order = 'hot', cat = '全部', limit = 50, offset = 0): Promise<ApiResponse<{ playlists: IPlaylist[]; total: number; more: boolean }>> => {
+export const getTopPlaylists = (order = 'hot', cat = '全部', limit = 50, offset = 0): Promise<ApiResponse & { playlists: IPlaylist[]; total: number; more: boolean }> => {
   return get('/top/playlist', { order, cat, limit, offset })
 }
 
@@ -193,7 +219,7 @@ export const getPlaylistCatlist = (): Promise<ApiResponse<{
 }
 
 // 获取热门歌单分类
-export const getPlaylistHotCategories = (): Promise<ApiResponse<{ tags: { id: number; name: string; category: number; hot: boolean }[] }>> => {
+export const getPlaylistHotCategories = (): Promise<ApiResponse<{ tags: ITagItem[] }>> => {
   return get('/playlist/hot')
 }
 
@@ -231,7 +257,7 @@ export const getDefaultSearchKeyword = (): Promise<ApiResponse<{ realkeyword: st
 }
 
 // 获取热搜列表(简略)
-export const getHotSearch = (): Promise<ApiResponse<{ result: { hots: IHotSearch[] } }>> => {
+export const getHotSearch = (): Promise<ApiResponse<{ hots: IHotSearch[] }>> => {
   return get('/search/hot')
 }
 
@@ -241,7 +267,7 @@ export const getHotSearchDetail = (): Promise<ApiResponse<{ searchWord: string; 
 }
 
 // 获取搜索建议
-export const getSearchSuggest = (keywords: string, type = 'mobile'): Promise<ApiResponse<{ result: ISearchSuggest }>> => {
+export const getSearchSuggest = (keywords: string, type = 'mobile'): Promise<ApiResponse & { result: { allMatch: IMatch[] } }> => {
   return get('/search/suggest', { keywords, type, nocache })
 }
 
@@ -268,17 +294,22 @@ export const getDailyRecommendPlaylists = (): Promise<ApiResponse<{ recommend: I
 }
 
 // 获取每日推荐歌曲(需登录)
-export const getDailyRecommendSongs = (): Promise<ApiResponse<{ dailySongs: IDailySong[]; recommendReasons: any[] }>> => {
+export const getDailyRecommendSongs = (): Promise<ApiResponse<{ dailySongs: ISongDetail[]; recommendReasons: IDailyRecommendReason[] }>> => {
   return get('/recommend/songs')
 }
 
-// 获取私人FM，一般只有一首，播放完再次调用
-export const getPersonalFM = (): Promise<ApiResponse<ISong[]>> => {
+// 获取私人FM
+export const getPersonalFM = (): Promise<ApiResponse<ISong2[]>> => {
   return get('/personal_fm', { nocache })
 }
 
+// FM: 扔进垃圾桶
+export const fmTrash = (id: number): Promise<ApiResponse> => {
+  return get('/fm_trash', { id, nocache })
+}
+
 // 推荐新音乐
-export const getNewSongs = (limit = 10): Promise<ApiResponse<{ result: { id: number; name: string; picUrl: string; song: { artists: IArtist[]; album: IAlbum; duration: number } }[] }>> => {
+export const getNewSongs = (limit = 10): Promise<ApiResponse<{ result: ISongPersonalized[] }>> => {
   return get('/personalized/newsong', { limit, nocache })
 }
 
@@ -310,12 +341,12 @@ export const getSimiArtists = (id: number): Promise<ApiResponse<{ artists: IArti
 }
 
 // 获取热门歌手
-export const getHotArtists = (limit = 30, offset = 0): Promise<ApiResponse<{ artists: IArtist[]; more: boolean }>> => {
+export const getHotArtists = (limit = 30, offset = 0): Promise<ApiResponse & { artist: IArtist; more: boolean }> => {
   return get('/top/artists', { limit, offset })
 }
 
 // 歌手分类列表
-export const getArtistList = (cat = 1001, limit = 30, offset = 0, initial?: string): Promise<ApiResponse<{ artists: IArtist[]; more: boolean }>> => {
+export const getArtistList = (cat = 1001, limit = 30, offset = 0, initial?: string): Promise<ApiResponse & { artist: IArtist }> => {
   return get('/artist/list', { cat, limit, offset, initial })
 }
 
@@ -325,7 +356,7 @@ export const getSubArtists = (): Promise<ApiResponse<{ data: IArtist[]; hasMore:
 }
 
 // 收藏/取消收藏歌手
-export const subscribeArtist = (id: number, t: 1 | 0): Promise<ApiResponse> => {
+export const subscribeArtist = (id: number, t: 1 | 0): Promise<ApiResponse<null>> => {
   return get('/artist/sub', { id, t, nocache })
 }
 
@@ -337,7 +368,7 @@ export const getAlbum = (id: number): Promise<ApiResponse<{ album: IAlbum; songs
 }
 
 // 获取最新专辑
-export const getNewAlbums = (limit = 20, offset = 0, area = 'ALL', type = 'new'): Promise<ApiResponse<{ albums: IAlbum[]; total: number; more: boolean }>> => {
+export const getNewAlbums = (limit = 20, offset = 0, area = 'ALL', type = 'new'): Promise<ApiResponse & { albums: IAlbum[]; total: number }> => {
   return get('/album/new', { limit, offset, area, type })
 }
 
@@ -436,7 +467,7 @@ export const getHotComments = (id: number, type: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0, 
 // ==================== 其他 ====================
 
 // 签到
-export const dailySignin = (type = 0): Promise<ApiResponse> => {
+export const dailySignin = (type = 1): Promise<ApiResponse> => {
   return get('/daily_signin', { type, nocache })
 }
 
@@ -446,18 +477,20 @@ export const getHomepageBlockPage = (refresh = false): Promise<ApiResponse> => {
 }
 
 // 获取Dragon Ball
-export const getDragonBall = (): Promise<ApiResponse> => {
-  return get('/homepage/dragon/ball')
-}
+// ？？
+// export const getDragonBall = (): Promise<ApiResponse> => {
+//   return get('/homepage/dragon/ball')
+// }
 
 // 云村热评
-export const getHotwallList = (): Promise<ApiResponse<{ id: number; content: string; simpleUserInfo: IUser }[]>> => {
-  return get('/comment/hotwall/list')
-}
+// 官方下架
+// export const getHotwallList = (): Promise<ApiResponse<{ id: number; content: string; simpleUserInfo: IUser }[]>> => {
+//   return get('/comment/hotwall/list')
+// }
 
 // 获取音乐url - 备用方案
 export const getMusicUrl = (id: number): string => {
-  return `https://music.163.com/song/media/outer/url?id=${id}.mp3`
+  return `https://music.163.com/song/media/outer/url?id=${id}`
 }
 
 /**

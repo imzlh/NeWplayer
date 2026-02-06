@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import type { IToplist } from '@/types'
+import type { IToplist } from '@/api/types'
 import Loading from '@/components/Loading.vue'
 import { getAllTopLists } from '@/api'
 

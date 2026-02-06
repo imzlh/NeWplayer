@@ -10,15 +10,25 @@
           <div v-if="title" class="action-sheet-title">{{ title }}</div>
           <div v-if="description" class="action-sheet-description">{{ description }}</div>
 
-          <!-- prevent: stop drag event to trigger click event -->
-          <div class="action-sheet-options"
-            @touchstart.stop @mousedown.stop @touchmove.stop @touchend.stop @mouseup.stop @mousemove.stop
-          >
-            <button v-for="(option, index) in options" :key="option.key ?? index" class="action-option"
-              :class="getOptionClass(option)" @click="handleOptionClick(option)" :disabled="option.disabled">
-              <span v-if="option.icon" class="option-icon" v-html="option.icon"></span>
-              <span class="option-label">{{ option.label }}</span>
-            </button>
+          <!-- 表格式选项 -->
+          <div class="action-sheet-table">
+            <table>
+              <tbody>
+                <tr v-for="(option, index) in options" :key="option.key ?? index" class="action-row"
+                  :class="getRowClass(option)" @click="handleOptionClick(option)">
+                  <td class="action-icon-cell">
+                    <div v-if="option.icon" class="option-icon-container">
+                      <div v-if="option.icon.startsWith('<')" class="option-icon-html" v-html="option.icon"></div>
+                      <div v-else class="option-icon-text">{{ option.icon }}</div>
+                    </div>
+                  </td>
+                  <td class="action-label-cell">
+                    <span class="option-label">{{ option.label }}</span>
+                    <div v-if="option.description" class="option-description">{{ option.description }}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </Transition>
@@ -37,6 +47,7 @@ export interface ActionSheetOption {
   destructive?: boolean
   disabled?: boolean
   callback?: (value?: any) => void
+  description?: string
 }
 
 interface Props {
@@ -179,20 +190,20 @@ const handleMouseDown = (e: MouseEvent) => {
 const handleOptionClick = (option: ActionSheetOption) => {
   if (option.disabled) return
 
-  emit('select', option)
-
   if (option.callback) {
     option.callback(option.value)
   }
+
+  emit('select', option)
 
   if (props.closeOnClickOption) {
     handleClose()
   }
 }
 
-const getOptionClass = (option: ActionSheetOption) => ({
-  destructive: option.destructive,
-  disabled: option.disabled,
+const getRowClass = (option: ActionSheetOption) => ({
+  'destructive': option.destructive,
+  'disabled': option.disabled,
   'has-icon': !!option.icon
 })
 
@@ -278,75 +289,94 @@ $bg-card-inner: #575d6c;
   line-height: 1.4;
 }
 
-.action-sheet-options {
+.action-sheet-table {
   background: $bg-card-inner;
   border-radius: $radius-md;
   overflow: hidden;
   margin-bottom: $spacing-sm;
-  overflow-y: auto;
+  width: 100%;
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
 }
 
-.action-option {
-  width: 100%;
-  padding: $spacing-md;
-  font-size: $font-lg;
-  color: white;
-  background: $bg-card-inner;
-  border: none;
-  border-bottom: 0.125rem /* 1px */ solid $border-light;
+.action-row {
   cursor: pointer;
   transition: background $transition-fast $ease-default;
-  display: flex;
-  align-items: center;
-  gap: $spacing-xl;
-  padding-left: $spacing-xl;
-  min-height: 3.5rem /* 56px */;
-  text-align: left;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
+  
   &:active:not(.disabled) {
     background: $bg-hover;
   }
-
+  
   &.destructive {
-    color: rgb(255, 208, 208);
+    .option-label {
+      color: rgb(255, 208, 208);
+    }
   }
-
+  
   &.disabled {
-    color: $text-tertiary;
-    cursor: not-allowed;
     opacity: 0.5;
+    cursor: not-allowed;
+    
+    .option-label {
+      color: $text-tertiary;
+    }
   }
 }
 
-.option-icon {
-  font-size: 1.25rem /* 20px */;
-  line-height: 1;
+.action-icon-cell {
+  width: 3.5rem; /* 56px */
+  padding: $spacing-md;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.action-label-cell {
+  padding: $spacing-md $spacing-md $spacing-md $spacing-sm;
+  vertical-align: middle;
+}
+
+.option-icon-container {
+  width: 2rem; /* 32px */
+  height: 2rem; /* 32px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.option-icon-html {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  :deep(svg), :deep(img) {
+    width: 1.5rem; /* 24px */
+    height: 1.5rem; /* 24px */
+  }
+}
+
+.option-icon-text {
+  font-size: 1.25rem; /* 20px */
+  color: $text-primary;
 }
 
 .option-label {
+  font-size: $font-lg;
+  color: $text-primary;
   line-height: 1.2;
 }
 
-.action-cancel {
-  width: 100%;
-  padding: $spacing-md;
-  font-size: $font-lg;
-  font-weight: 600;
-  color: $primary-color;
-  background: $bg-card-inner;
-  border: none;
-  border-radius: $radius-md;
-  cursor: pointer;
-  transition: background $transition-fast $ease-default;
-  min-height: 3.5rem /* 56px */;
-
-  &:active {
-    background: $bg-hover;
-  }
+.option-description {
+  font-size: $font-xs;
+  color: $text-tertiary;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 /* Animations */
@@ -374,13 +404,5 @@ $bg-card-inner: #575d6c;
 .action-sheet::-webkit-scrollbar {
   width: 0;
   background: transparent;
-}
-</style>
-
-<style>
-.option-icon > svg, .option-icon > img {
-  width: 1.25rem /* 20px */;
-  height: 1.25rem /* 20px */;
-  fill: currentColor;
 }
 </style>

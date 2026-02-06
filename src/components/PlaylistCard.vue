@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IPlaylist } from '@/types'
+import type { IPlaylist } from '@/api/types'
 import { getImageUrl, formatNumber } from '@/utils/lyric'
 
 interface Props {

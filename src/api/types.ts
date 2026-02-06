@@ -1,17 +1,37 @@
 // 用户类型
+export interface IUserState {
+  id: number;
+  userName: string;
+  type: number;
+  status: number;
+  whitelistAuthority: number;
+  createTime: number;
+  tokenVersion: number;
+  ban: number;
+  vipType: number;
+  anonimousUser: boolean;
+  paidFee: boolean;
+}
+
 export interface IUser {
-  userId: number
-  nickname: string
-  avatarUrl: string
-  signature?: string
-  gender?: number
-  birthday?: number
-  province?: number
-  city?: number
-  followeds?: number
-  follows?: number
-  eventCount?: number
-  playlistCount?: number
+  userId: number;
+  nickname: string;
+  avatarUrl: string;
+  backgroundUrl: string;
+  signature: string;
+  birthday: number;
+  gender: number;
+  province: number;
+  city: number;
+  vipType: number;
+  lastLoginTime: number;
+}
+
+export interface IUserCountInfo {
+  createdPlaylistCount: number;  // 创建的歌单数
+  subPlaylistCount: number;      // 收藏的歌单数
+  artistCount: number;           // 收藏的歌手数
+  mvCount: number;              // 收藏的MV数
 }
 
 // 歌曲类型
@@ -126,6 +146,56 @@ export interface ISongDetail {
   a?: any;
 }
 
+export interface IQualitySection {
+  lMusic: IAudioQuality;
+  mMusic: IAudioQuality;
+  bMusic: IAudioQuality;
+  hMusic: IAudioQuality;
+  hrMusic: IAudioQuality;
+  sqMusic: IAudioQuality;
+};
+
+export interface ISong2 extends IQualitySection {
+  dayPlays: number;
+  fee: number;
+  privilege: IPrivilege;
+  duration: number;
+  starred: boolean;
+  artists: IArtist[];
+  rtUrls?: any[];
+  popularity: number;
+  playedNum: number;
+  hearTime: number;
+  alias: string[];
+  starredNum: number;
+  id: number;
+  album: IAlbum;
+  ringtone: string;
+  commentThreadId: string;
+  
+  mvid: number;
+  name: string;
+  disc: string;
+  position: number;
+  mark: number;
+  status: number;
+}
+
+export interface ISong2Recommend extends ISong2 {
+  recommendReason: string;
+  mp3Url: string;
+}
+
+// 个人推荐
+export interface ISongPersonalized {
+  id: number
+  name: string
+  picUrl: string
+  song: ISong2
+  alg: string
+  canDislike: boolean
+}
+
 // 歌手类型
 export interface IArtist {
   id: number
@@ -138,8 +208,13 @@ export interface IAlbum {
   id: number
   name: string
   picUrl: string
-  artist?: IArtist,
+  artist: IArtist,
   publishTime: number;
+  description: string;
+  subType: string;  // 专辑类型，如 “录音室版”
+  blurPicUrl: string;
+
+  artists: IArtist[]
 }
 
 export interface ITrack {
@@ -167,13 +242,45 @@ export interface IPlaylist {
   description?: string
   playCount: number
   trackCount: number
-  creator?: IUser
+  creator: IUser
   tracks?: ITrack[]
   subscribed?: boolean,
   subscribedCount: number,
   shareCount: number,
   commentCount: number,
   trackIds: ITrack[]
+
+  userId: number
+  highQuality: boolean;
+  specialType: number;
+}
+
+export interface IHistory {
+  playCount: number
+  score: number
+  song: ISongDetail
+}
+
+export interface IDJProgram {
+  id: number;                    // 节目ID
+  name: string;                  // 节目名称
+  description: string;          // 节目描述
+  coverUrl: string;            // 封面图片URL
+  duration: number;            // 时长（毫秒）
+  createTime: number;          // 创建时间（时间戳）
+  listenerCount: number;       // 收听人数
+  subscribedCount: number;     // 订阅人数
+  likedCount: number;          // 点赞数
+  commentCount: number;        // 评论数
+  shareCount: number;          // 分享数
+  categoryId: number;          // 分类ID
+  channels: string[];          // 频道标签
+  
+  // DJ主播信息
+  dj: IUser;
+  
+  // 主歌曲信息
+  mainSong: ISong2
 }
 
 // 歌单类型
@@ -188,7 +295,6 @@ export interface IPlaylistType {
   hot: boolean,
   activity: boolean
 }
-
 
 /**
  * 评论响应接口
@@ -222,12 +328,11 @@ export interface ILyric {
   transText?: string
 }
 
-// 搜索建议类型
-export interface ISearchSuggest {
-  albums?: IAlbum[]
-  artists?: IArtist[]
-  songs?: ISong[]
-  playlists?: IPlaylist[]
+export interface IMatch {
+  alg: string;  // 算法类型
+  keyword: string;
+  lastKeyword: string;
+  type: number;
 }
 
 // 播放模式
@@ -235,6 +340,7 @@ export enum PlayMode {
   Sequence = 0,
   Random = 1,
   Loop = 2,
+  PersonalFM = 3
 }
 
 // 播放状态
@@ -268,20 +374,26 @@ export interface IRecommendPlaylist {
   playcount: number
 }
 
-// 每日推荐歌曲
-export interface IDailySong {
-  id: number
-  name: string
-  artists: IArtist[]
-  album: IAlbum
-  duration: number
+// 每日推荐歌曲原因
+export interface IDailyRecommendReason {
+  songId: number
   reason: string
 }
+
+export interface ITagItem {
+  id: number;          // 标签ID
+  name: string;       // 标签名称
+  hot?: boolean;      // 是否热门（可选）
+  category: number;   // 分类
+  position: number;   // 排序位置
+  usedCount: number;  // 使用次数
+};
 
 // 热搜类型
 export interface IHotSearch {
   first: string
   second?: number
+  third?: string
   iconType?: number
 }
 
@@ -347,18 +459,6 @@ export interface IDJRadio {
   programCount: number
 }
 
-// 电台节目类型
-export interface IDJProgram {
-  id: number
-  name: string
-  coverUrl: string
-  dj: IUser
-  radio: IDJRadio
-  duration: number
-  listenerCount: number
-  likedCount: number
-}
-
 // 登录响应类型
 export interface ILoginResponse {
   code: number
@@ -368,10 +468,52 @@ export interface ILoginResponse {
   message?: string
 }
 
+export interface IUserEvent {
+  id: number;                      // 动态ID
+  type: ShareType;                 // 动态类型
+  eventTime: number;               // 发布时间戳
+  threadId: string;                // 评论线程ID
+  forwardCount: number;            // 转发数
+  likedCount: number;              // 点赞数
+  commentCount: number;            // 评论数
+  shareCount: number;              // 分享数
+  
+  // 发布者信息
+  user: IUser;
+  
+  json: string;                    // 动态内容JSON字符串, msg: string
+}
+
+export enum ShareType {
+  SHARE_SONG = 18,           // 分享单曲
+  SHARE_ALBUM = 19,          // 分享专辑
+  SHARE_DJ_PROGRAM = 17,     // 分享电台节目
+  SHARE_DJ_PROGRAM_2 = 28,   // 分享电台节目（备用类型）
+  REPOST = 22,               // 转发
+  PUBLISH_VIDEO = 39,        // 发布视频
+  SHARE_PLAYLIST = 35,       // 分享歌单
+  SHARE_PLAYLIST_2 = 13,     // 分享歌单（备用类型）
+  SHARE_ARTICLE = 24,        // 分享专栏文章
+  SHARE_VIDEO = 41,          // 分享视频
+  SHARE_VIDEO_2 = 21         // 分享视频（备用类型）
+}
+
 // API响应类型
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = undefined> {
   code: number
-  data?: T
+  data: T
   message?: string
   [key: string]: any
+}
+
+export interface ISongUrl {
+  id: number;
+  br: number;
+  size: number;
+  md5: string;
+  code: number;
+  expi: number;
+  type: string;
+  encodeType: string;
+  url: string;
 }

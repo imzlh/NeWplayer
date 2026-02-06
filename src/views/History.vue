@@ -7,16 +7,10 @@
         </svg>
       </button>
       <h1 class="header-title">播放历史</h1>
-      <button class="header-clear" @click="clearHistory">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3 6 5 6 21 6"/>
-          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-        </svg>
-      </button>
     </header>
     
     <main class="history-content">
-      <div v-if="playerStore.playHistory.length === 0" class="history-empty">
+      <div v-if="playHistory.length === 0" class="history-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
@@ -26,13 +20,13 @@
       </div>
       <div v-else class="songs-list">
         <SongListItem
-          v-for="(song, index) in playerStore.playHistory"
+          v-for="(song, index) in playHistory"
           :key="`${song.id}-${index}`"
-          :song="song"
+          :song="songDetail2Song(song)"
           :index="index"
           :is-active="playerStore.currentSong?.id === song.id"
           :is-playing="playerStore.isPlaying && playerStore.currentSong?.id === song.id"
-          @click="playSong(song)"
+          @click="playSong(songDetail2Song(song))"
         />
       </div>
     </main>
@@ -42,22 +36,25 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
-import type { ISong } from '@/types'
+import type { ISong, ISongDetail } from '@/api/types'
 import SongListItem from '@/components/SongListItem.vue'
+import { shallowRef } from 'vue'
+import { getUserRecord } from '@/api'
+import { useUserStore } from '@/stores/user'
+import { songDetail2Song } from '@/api/helper'
 
 const router = useRouter()
 const playerStore = usePlayerStore()
+const userStore = useUserStore();
+const playHistory = shallowRef<ISongDetail[]>([]);
 
 const playSong = async (song: ISong) => {
   await playerStore.playFromHistory(song)
 }
 
-const clearHistory = () => {
-  if (confirm('确定要清空播放历史吗？')) {
-    playerStore.playHistory = []
-    localStorage.removeItem('playHistory')
-  }
-}
+getUserRecord(userStore.userId, 0).then(res => {
+  playHistory.value = res.allData?.map(e => e.song) || [];
+});
 
 const goBack = () => router.back()
 </script>
@@ -82,8 +79,7 @@ const goBack = () => router.back()
   backdrop-filter: blur(1.25rem /* 20px */);
 }
 
-.header-back,
-.header-clear {
+.header-back{
   width: 2.5rem /* 40px */;
   height: 2.5rem /* 40px */;
   @include flex-center;

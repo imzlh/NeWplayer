@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import type { IBanner } from '@/types'
+import type { IBanner } from '@/api/types'
 
 interface Props {
   banners: IBanner[]

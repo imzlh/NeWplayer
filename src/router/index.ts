@@ -78,6 +78,16 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/user/:id',
+    name: 'UserProfile',
+    component: () => import('@/views/UserProfile.vue'),
+    meta: {
+      title: '用户详情',
+      keepAlive: false,
+      requiresAuth: false,
+    },
+  },
+  {
     path: '/daily-recommend',
     name: 'DailyRecommend',
     component: () => import('@/views/DailyRecommend.vue'),

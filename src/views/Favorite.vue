@@ -67,7 +67,7 @@ import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
-import type { ISong } from '@/types'
+import type { ISong } from '@/api/types'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
 

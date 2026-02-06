@@ -1,10 +1,12 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse } from '@/api/types'
 
 // @ts-ignore
 const BASE_URL = import.meta.env.VITE_NEWP_API_BASE_URL || '/@neast';
 // @ts-ignore
-const KV_URL = import.meta.env.VITE_NEWP_KV_API_URL || '/cgi-bin/kv.php';
+const KV_URL = import.meta.env.VITE_NEWP_KV_API_URL || '/cgi-bin/kv';
+// @ts-ignore
+const COOKIE_URL = import.meta.env.VITE_NEWP_COOKIE_API_URL || '/cgi-bin/cookie';
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
@@ -207,5 +209,38 @@ export namespace KV {
 
   // 别名
   export const set = put;
+  export const remove = del;
+}
+
+export namespace Cookie {
+  export class Error extends globalThis.Error {
+    constructor(message: string, public readonly status: number) {
+      super(message);
+    }
+  }
+
+  /**
+   * POST - 设置浏览器 Cookie（支持用 ;; 分隔的多条）
+   * 解决 JS 无法直接设置 HttpOnly / Secure / SameSite=None 等问题
+   */
+  export async function set(cookieString: string): Promise<void> {
+    const res = await fetch(COOKIE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: cookieString
+    });
+    if (!res.ok) throw new Error(await res.text(), res.status);
+  }
+
+  /**
+   * DELETE - 删除指定 Cookie（通过 name）
+   */
+  export async function del(name: string): Promise<void> {
+    const res = await fetch(`${COOKIE_URL}?name=${encodeURIComponent(name)}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error(await res.text(), res.status);
+  }
+
   export const remove = del;
 }

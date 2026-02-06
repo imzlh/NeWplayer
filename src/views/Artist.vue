@@ -16,7 +16,7 @@
           <img :src="getImageUrl(artist.picUrl, 300, 300)" :alt="artist.name" class="cover-image"/>
         </div>
         <h2 class="info-name">{{ artist.name }}</h2>
-        <p v-if="artistDesc" class="info-desc text-ellipsis-2">{{ artistDesc }}</p>
+        <p v-if="artistDesc" class="info-desc text-ellipsis-2" @click="showText(artistDesc, artist.name)">{{ artistDesc }}</p>
       </section>
       
       <section class="artist-actions">
@@ -94,10 +94,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
-import type { IArtist as ArtistType, ISong, IAlbum } from '@/types'
+import type { IArtist as ArtistType, ISong, IAlbum } from '@/api/types'
 import { getImageUrl, formatDate } from '@/utils/lyric'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
+import { showText } from '@/stores/text'
 
 const route = useRoute()
 const router = useRouter()

@@ -4,13 +4,13 @@ import type { ActionSheetOption } from '@/components/Action.vue'
 // 全局Action状态
 const showActionSheet = ref(false)
 const actionSheetOptions = ref<ActionSheetOption[]>([])
-let actionCallback: ((option?: any) => void) | null = null
+let actionCallback: ((option?: ActionSheetOption) => void) | null = null
 
 // 显示ActionSheet
-export const showAction = (options: ActionSheetOption[], callback?: (option?: any) => void) => {
+export const showAction = (options: ActionSheetOption[], callback?: (option?: ActionSheetOption) => void) => {
   actionSheetOptions.value = options
   showActionSheet.value = true
-  actionCallback = callback || null
+  actionCallback = callback ?? null;
 }
 
 // 关闭ActionSheet

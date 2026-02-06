@@ -1,13 +1,14 @@
 import { showAction } from "@/stores/action"
 import { usePlayerStore } from "@/stores/player"
 import { useUserStore } from "@/stores/user"
-import { ISong } from "@/types"
+import { ISong } from "@/api/types"
 import * as api from '@/api'
 import router from "@/router"
 import { svg } from "./svg"
+import { ActionSheetOption } from "@/components/Action.vue"
 
-export const showDefaultSongActions = (song: ISong) => {
-    const options = [
+export const showDefaultSongActions = (song: ISong, addition?: ActionSheetOption[]) => {
+    const options: ActionSheetOption[] = [
         {
             label: '播放',
             value: 'play',
@@ -37,7 +38,8 @@ export const showDefaultSongActions = (song: ISong) => {
             label: '专辑:' + song.album.name,
             value: 'album',
             icon: svg.album
-        }
+        },
+        ...(addition || [])
     ]
 
     const playerStore = usePlayerStore();
@@ -48,6 +50,8 @@ export const showDefaultSongActions = (song: ISong) => {
 
         const action = option.value
         switch (action) {
+            case undefined:
+                return;
             case 'play':
                 // 播放当前歌曲
                 playerStore.playPlaylist([song], 0)
@@ -77,6 +81,7 @@ export const showDefaultSongActions = (song: ISong) => {
                     const artistId = action.split('.')[1]
                     router.push({ name: 'Artist', params: { id: artistId } });
                 }
+                break
         }
     })
 }

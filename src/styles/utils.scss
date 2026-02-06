@@ -1,0 +1,73 @@
+// 主混合：兼容性gap解决方案
+@mixin flex-gap($row-gap: null, $column-gap: null, $gap: null) {
+  // 处理简写gap属性
+  @if $gap != null {
+    @include _process-gap($gap);
+  }
+  
+  // 处理分开的row-gap和column-gap
+  @else if $row-gap != null or $column-gap != null {
+    $row: if($row-gap != null, $row-gap, 0);
+    $column: if($column-gap != null, $column-gap, 0);
+    
+    // 输出现代gap属性
+    row-gap: $row;
+    column-gap: $column;
+    
+    // 输出兼容方案
+    @include _apply-compatible-gap($row, $column);
+  }
+}
+
+// 处理简写gap值
+@mixin _process-gap($gap) {
+  $values: if(type-of($gap) == 'list', $gap, ($gap));
+  $length: length($values);
+  
+  @if $length == 1 {
+    $value: nth($values, 1);
+    gap: $value;
+    @include _apply-compatible-gap($value, $value);
+  }
+  
+  @else if $length == 2 {
+    $row: nth($values, 1);
+    $column: nth($values, 2);
+    gap: $row $column;
+    @include _apply-compatible-gap($row, $column);
+  }
+}
+
+// 应用兼容性margin方案
+@mixin _apply-compatible-gap($row, $column) {
+  // 记录当前选择器，用于嵌套
+  $selector: &;
+  
+  @if $column != 0 {
+    // 使用margin-right添加列间距
+    margin-right: -#{$column};
+    
+    > * {
+      margin-right: #{$column};
+    }
+  }
+  
+  @if $row != 0 {
+    // 使用margin-bottom添加行间距
+    > * {
+      margin-bottom: #{$row};
+    }
+    
+    // 清除最后一行的底部间距
+    #{$selector} {
+      > *:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+// 简写别名（可选）
+@mixin gap($args...) {
+  @include flex-gap($args...);
+}
