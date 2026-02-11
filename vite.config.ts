@@ -40,5 +40,6 @@ export default defineConfig({
       }
     }
   },
-  base: './'
+  base: './',
+  envPrefix: ['NEWP_', 'VITE_']
 })

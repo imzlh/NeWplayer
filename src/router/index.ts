@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import routeOpHandler from './op'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -144,6 +145,15 @@ const routes: RouteRecordRaw[] = [
       title: '我喜欢的音乐',
       keepAlive: false,
     },
+  },
+  {
+    path: '/op/:action',
+    name: 'InternalOperation',
+    redirect(to, from) {
+      // receive op
+      routeOpHandler(to.query, to.params.action as string);
+      return '/';
+    }
   },
   {
     path: '/:pathMatch(.*)*',

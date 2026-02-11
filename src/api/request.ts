@@ -2,13 +2,13 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/api/types'
 
 // @ts-ignore
-const BASE_URL = import.meta.env.NEWP_API_BASE_URL || '/@neast';
+const BASE_URL = localStorage.getItem('api_url') || import.meta.env.NEWP_API_BASE_URL || '/@neast';
 // @ts-ignore
-const KV_URL = import.meta.env.NEWP_KV_API_URL || '/cgi-bin/kv';
+const KV_URL = localStorage.getItem('kv_url') || import.meta.env.NEWP_KV_API_URL || '/cgi-bin/kv';
 // @ts-ignore
-const COOKIE_URL = import.meta.env.NEWP_COOKIE_API_URL || '/cgi-bin/cookie';
+const COOKIE_URL = localStorage.getItem('cookie_url') || import.meta.env.NEWP_COOKIE_API_URL || '/cgi-bin/cookie';
 // @ts-ignore
-const KV_ENABLED = !!import.meta.env.NEWP_DISABLE_KV;
+const KV_DISABLED = localStorage.getItem('disable_kv') ||  !!import.meta.env.NEWP_DISABLE_KV;
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
@@ -82,7 +82,7 @@ export namespace KV {
     body?: string,
     query?: Record<string, string>
   ): Promise<Response> {
-    if (!KV_ENABLED) throw new Error("KV remote store disabled", 404);
+    if (KV_DISABLED) throw new Error("KV remote store disabled", 404);
 
     const params = new URLSearchParams();
     if (key) params.set('key', key);
@@ -130,7 +130,7 @@ export namespace KV {
   }
 
   export function putUnload(key: string, value: string): boolean {
-    if (!KV_ENABLED) return false;
+    if (!KV_DISABLED) return false;
     const url = buildURL(key);
     const blob = new Blob([value], { type: 'text/plain' });
 
