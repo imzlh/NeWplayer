@@ -242,7 +242,7 @@ $bg-card-inner: #575d6c;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: #ffffff5c;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -253,7 +253,8 @@ $bg-card-inner: #575d6c;
 .action-sheet {
   width: 100%;
   max-width: $screen-width;
-  background: $bg-card;
+  background: rgba(254, 243, 243, 0.4);
+  backdrop-filter: blur(.75rem);
   border-radius: $radius-lg $radius-lg 0 0;
   padding: 0.5rem /* 8px */ 0.5rem /* 8px */ calc(env(safe-area-inset-bottom) + 0.5rem /* 8px */);
   max-height: 80vh;
@@ -293,7 +294,7 @@ $bg-card-inner: #575d6c;
 }
 
 .action-sheet-table {
-  background: $bg-card-inner;
+  background: rgba(0, 0, 0, 0.15);
   border-radius: $radius-md;
   overflow: hidden;
   margin-bottom: $spacing-sm;

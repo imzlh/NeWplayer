@@ -71,7 +71,7 @@ export const usePlayerStore = defineStore('player', () => {
   // ============ 工具函数 ============
   function getValidPlayMode(): PlayMode {
     const saved = parseInt(localStorage.getItem('playMode') || String(DEFAULT_PLAY_MODE))
-    return (saved >= 0 && saved <= 3) ? saved as PlayMode : DEFAULT_PLAY_MODE
+    return (saved >= 0 && saved <= 4) ? saved as PlayMode : DEFAULT_PLAY_MODE
   }
 
   function getValidQuality(): number {
@@ -212,7 +212,10 @@ export const usePlayerStore = defineStore('player', () => {
       savePlayerState()
     } catch (error) {
       console.error('播放失败:', error)
-      await next()
+      // FM模式下，不要在 play 函数中自动切歌，由 handlePlayError 统一处理
+      if (!isPersonalFM.value) {
+        await next()
+      }
     }
   }
 
@@ -266,6 +269,11 @@ export const usePlayerStore = defineStore('player', () => {
         console.warn('无法获取更多FM歌曲')
         stopPersonalFM()
       }
+    }
+
+    // 如果播放列表剩余歌曲少于3首，预加载下一批
+    if (playlist.value.length - currentIndex.value < 3) {
+      fetchFMSongs().catch(console.error)
     }
   }
 
@@ -523,11 +531,22 @@ export const usePlayerStore = defineStore('player', () => {
       failedSongs.value.add(currentSong.value.id)
     }
 
-    setTimeout(() => next(), 1000)
+    // FM模式下，如果是第一首歌加载失败，重试一次
+    if (isPersonalFM.value && currentIndex.value === 0) {
+      setTimeout(() => {
+        playAtIndex(0).catch(() => {
+          next()
+        })
+      }, 1000)
+    } else {
+      // 其他情况，直接跳到下一首
+      setTimeout(() => next(), 1000)
+    }
   }
 
   // ============ 私人FM处理 ============
   async function startPersonalFM() {
+    // 切换到FM模式
     playMode.value = PlayModeEnum.PersonalFM
     fmHistory.value = []
     fmNextBatch.value = []
@@ -536,11 +555,16 @@ export const usePlayerStore = defineStore('player', () => {
     clearPlayer()
 
     // 获取第一批FM歌曲
-    await fetchFMSongs()
+    const songCount = await fetchFMSongs()
 
-    if (playlist.value.length > 0) {
+    if (songCount > 0) {
       await playAtIndex(0)
+    } else {
+      stopPersonalFM()
     }
+
+    // 保存
+    localStorage.setItem('playMode', PlayModeEnum.PersonalFM.toString());
   }
 
   function stopPersonalFM() {
@@ -554,33 +578,28 @@ export const usePlayerStore = defineStore('player', () => {
   async function fetchFMSongs() {
     try {
       const response = await api.getPersonalFM()
-      if (response.code === 200 && response.data) {
+      if (response.code === 200 && response.data && response.data.length > 0) {
+        const newSongs = response.data
+
         // 添加到播放列表
-        playlist.value.push(...response.data)
-        // 保存到下一批预加载
-        fmNextBatch.value = [...response.data]
+        playlist.value.push(...newSongs)
+
+        // 更新预加载批次
+        fmNextBatch.value = [...newSongs]
+
+        return newSongs.length
+      } else {
+        console.warn('FM: 获取FM歌曲返回空数据')
+        return 0
       }
     } catch (error) {
       console.error('获取私人FM失败:', error)
+      return 0
     }
   }
 
   async function playNextFM() {
-    // 如果已经到了当前批次的末尾
-    if (currentIndex.value >= playlist.value.length - 1) {
-      // 使用预加载的下一批
-      if (fmNextBatch.value.length > 0) {
-        playlist.value.push(...fmNextBatch.value)
-        fmNextBatch.value = []
-
-        // 预加载下一批
-        fetchFMSongs().catch(console.error)
-      } else {
-        // 没有预加载，立即获取
-        await fetchFMSongs()
-      }
-    }
-
+    // 直接调用 handleFMNext，它会处理所有逻辑
     await handleFMNext()
   }
 
@@ -592,6 +611,7 @@ export const usePlayerStore = defineStore('player', () => {
   async function trashFMSong() {
     if (!isPersonalFM.value || !currentSong.value) return
 
+
     try {
       // 通知服务器不喜欢这首歌
       await api.fmTrash(currentSong.value.id)
@@ -602,13 +622,22 @@ export const usePlayerStore = defineStore('player', () => {
     // 记录到历史
     fmHistory.value.push(currentSong.value)
 
-    // 从播放列表中移除当前歌曲
-    const index = playlist.value.findIndex(s => s.id === currentSong.value!.id)
-    if (index !== -1) {
-      removeFromPlaylist(index)
+    // 手动从播放列表中移除当前歌曲，避免触发 removeFromPlaylist 的自动播放逻辑
+    const index = currentIndex.value
+    if (index >= 0 && index < playlist.value.length) {
+      const songId = playlist.value[index].id
+      playlist.value.splice(index, 1)
+      failedSongs.value.delete(songId)
+
+      // 调整当前索引，指向下一首
+      if (currentIndex.value >= playlist.value.length) {
+        currentIndex.value = playlist.value.length - 1
+      }
     }
 
-    // 播放下一首
+    savePlayerState()
+
+    // 播放下一首FM
     await playNextFM()
   }
 
