@@ -33,7 +33,9 @@ import type {
   ISong2,
   IUserState,
   IUserEvent,
-  IMatch
+  IMatch,
+  IVipInfo,
+  IPlaylist2
 } from '@/api/types'
 
 const nocache = true;
@@ -96,6 +98,10 @@ export const logout = (): Promise<ApiResponse> => {
 export const getUserDetail = (uid: number): Promise<ApiResponse & { profile: IUser; level: number; listenSongs: number, peopleCanSeeMyPlayRecord: boolean }> => {
   return get('/user/detail', { uid })
 }
+
+// VIP状态
+export const getUserVip = (uid?: number): Promise<ApiResponse<IVipInfo>> => 
+  get('/vip/info', { uid })
 
 // 用户follower
 export const getUserFollower = (uid: number, limit = 30, offset = 0): Promise<ApiResponse & { more: boolean, size: number, followeds: IUser[] }> => 
@@ -206,9 +212,9 @@ export const getTopPlaylists = (order = 'hot', cat = '全部', limit = 50, offse
   return get('/top/playlist', { order, cat, limit, offset })
 }
 
-// 获取相关歌单推荐
-export const getRelatedPlaylists = (id: number): Promise<ApiResponse<{ playlists: IPlaylist[] }>> => {
-  return get('/related/playlist', { id })
+// 获取相关歌单推荐(新版本)
+export const getRelatedPlaylists = (id: number): Promise<ApiResponse<{ recPlaylist: { playlist: IPlaylist2 }[] }>> => {
+  return get('/playlist/detail/rcmd/get', { id })
 }
 
 // 获取歌单分类

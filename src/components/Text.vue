@@ -248,6 +248,7 @@ onBeforeUnmount(() => {
     background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: flex-end;
+    justify-content: center;
     user-select: none;
     z-index: 9999;
 }

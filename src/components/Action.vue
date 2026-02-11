@@ -245,8 +245,9 @@ $bg-card-inner: #575d6c;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   user-select: none;
-  z-index: 9999;
+  z-index: $z-fixed + 1;
 }
 
 .action-sheet {
@@ -271,6 +272,8 @@ $bg-card-inner: #575d6c;
   border-radius: $radius-sm;
   margin: 0.5rem /* 8px */ auto 0.75rem /* 12px */;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
 }
 
 .action-sheet-title {

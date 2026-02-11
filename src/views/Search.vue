@@ -141,7 +141,7 @@
               v-for="playlist in searchResult.playlists"
               :key="playlist.id"
               :playlist="playlist"
-              @click="goToPlaylist"
+              @click="goToPlaylist(playlist as IPlaylist)"
             />
           </div>
         </div>

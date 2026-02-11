@@ -8,8 +8,8 @@
       <div class="bg-overlay"></div>
     </div>
 
-    <!-- 头部 -->
-    <header class="player-header">
+    <!-- 头部 - 歌词界面时显示，播放界面时隐藏 -->
+    <header v-show="showLyrics" class="player-header">
       <button class="header-btn" @click="goBack">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -24,7 +24,30 @@
           {{playerStore.currentSong?.artists?.map(a => a.name).join(' / ') || '选择一首歌曲开始播放'}}
         </p>
       </div>
-      <div class="header-spacer"></div>
+      <button class="header-btn" @click="showMore">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+          <path
+            d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- 播放界面头部 - 播放界面时显示，歌词界面时隐藏 -->
+    <header v-show="!showLyrics" class="player-header">
+      <button class="header-btn" @click="goBack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <div class="header-info" @click="playerStore.currentSong && showText(playerStore.currentSong.name, '正在播放')">
+        <p class="info-title text-ellipsis">
+          {{ playerStore.currentSong?.name || '未在播放' }}
+          <span v-if="playerStore.isPersonalFM" class="fm-badge">私人FM</span>
+        </p>
+        <p class="info-artist text-ellipsis">
+          {{playerStore.currentSong?.artists?.map(a => a.name).join(' / ') || '选择一首歌曲开始播放'}}
+        </p>
+      </div>
       <button class="header-btn" @click="showMore">
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
           <path
@@ -35,11 +58,13 @@
 
     <!-- 主要内容区域 -->
     <main class="player-main" ref="mainContainer">
-      <!-- 唱片区域 -->
-      <div class="album-area" :class="{ 'album-lyric': showLyrics }" @click="toggleLyrics">
+      <!-- 播放界面 - 唱片区域 -->
+      <div v-show="!showLyrics" class="album-area" @click="showLyrics = true" :style="{
+        transform: `translate(${swipeOffsetX}px, ${swipeOffsetY}px)`,
+        opacity: swipeOpacity
+      }">
         <!-- 专辑卡片 -->
-        <div class="album-container" :class="{ 'album-playing': playerStore.isPlaying }"
-          :style="{ width: containerMax + 'px', height: containerMax + 'px' }">
+        <div class="album-container" :style="{ width: containerMax + 'px', height: containerMax + 'px' }">
           <div class="album-card">
             <img v-if="playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl"
               :src="getImageUrl(playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl, 300, 300)"
@@ -51,29 +76,29 @@
             </div>
           </div>
         </div>
-        <!-- 歌词提示 -->
-        <div class="lyric-hint">
-          <span>点击显示歌词</span>
-        </div>
       </div>
 
-      <!-- 歌词区域 -->
-      <div v-show="showLyrics" class="lyrics-area" ref="lyricsRef" @click="toggleLyrics">
+      <!-- 歌词界面 - 歌词区域 -->
+      <div v-show="showLyrics" class="lyrics-container" ref="lyricsRef" :style="{
+        transform: `translateX(${swipeOffsetX}px)`,
+        opacity: swipeOpacity
+      }">
         <div v-if="playerStore.lyrics.length === 0" class="lyrics-empty">
           <p>暂无歌词</p>
         </div>
-        <div v-else class="lyrics-list">
-          <p v-for="(lyric, index) in playerStore.lyrics" :key="index" class="lyric-line"
+        <template v-else>
+          <p v-for="(lyric, index) in playerStore.lyrics" :key="index" class="lyric-line" @click="playLrc(lyric)"
             :class="{ 'lyric-active': index === playerStore.currentLyricIndex }">
-            {{ lyric.text }}
-            <span v-if="lyric.transText" class="lyric-trans">{{ lyric.transText }}</span>
+            <span v-if="showOriginal" class="lyric-original">{{ lyric.text }}</span>
+            <span v-if="showTranslation && lyric.transText" class="lyric-trans">{{ lyric.transText }}</span>
+            <span v-if="showRomaji && lyric.romaji" class="lyric-romaji">{{ lyric.romaji }}</span>
           </p>
-        </div>
+        </template>
       </div>
     </main>
 
-    <!-- 底部控制区域 -->
-    <footer class="player-footer">
+    <!-- 播放界面底部控制区域 -->
+    <footer v-show="!showLyrics" class="player-footer">
       <!-- 进度条 -->
       <div class="progress-area">
         <span class="time-current">{{ formatTime(playerStore.progress) }}</span>
@@ -91,7 +116,7 @@
       <div class="controls-area">
         <!-- 私人FM模式的控制按钮 -->
         <template v-if="playerStore.isPersonalFM">
-          <button class="control-btn btn-trash lg" @click="playerStore.trashFMSong">
+          <button class="control-btn btn-trash lg red" @click="playerStore.trashFMSong">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
             </svg>
@@ -119,6 +144,12 @@
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
             </svg>
+          </button>
+
+          <button class="control-btn lg btn-stop red" @click="playerStore.stopPersonalFM">
+            <svg fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z"/>            </svg>
           </button>
         </template>
 
@@ -167,10 +198,46 @@
       </div>
     </footer>
 
+    <!-- 歌词界面底部控制区域 -->
+    <footer v-show="showLyrics" class="lyrics-footer">
+      <!-- 歌词类型切换按钮 -->
+      <div class="lyrics-controls">
+        <button class="lyric-btn" :class="{ active: showOriginal }" @click="toggleLyricType('original')">
+          原
+        </button>
+        <button class="lyric-btn" :class="{ active: showTranslation }" @click="toggleLyricType('translation')">
+          译
+        </button>
+        <button class="lyric-btn" :class="{ active: showRomaji }" @click="toggleLyricType('romaji')">
+          音
+        </button>
+      </div>
+
+      <!-- 播放控制按钮 -->
+      <div class="lyrics-player-controls">
+        <button class="btn-play" :class="{ 'btn-loading': playerStore.isLoading }" @click="togglePlay">
+          <Loading v-if="playerStore.isLoading" :visible="true" />
+          <svg v-else-if="playerStore.isPlaying" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16" />
+            <rect x="14" y="4" width="4" height="16" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
+
+        <button class="btn-next" @click="playerStore.next">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+          </svg>
+        </button>
+      </div>
+    </footer>
+
     <!-- 播放列表弹窗 -->
     <Transition name="slide-up">
       <div v-if="showPlaylistModal" class="playlist-modal" @click="showPlaylistModal = false">
-        <div class="playlist-panel" @click.stop>
+        <div class="playlist-panel" @click.stop @touchmove.stop @touchstart.stop>
           <div class="panel-header">
             <h3>播放列表 ({{ playerStore.playlist.length }})</h3>
             <div class="panel-actions">
@@ -242,7 +309,7 @@ import { showAction } from '@/stores/action'
 import { getSongUrl } from '@/api'
 import { svg } from '@/utils/svg'
 import router from '@/router'
-import { PlayMode } from '@/api/types'
+import { ILyric, PlayMode } from '@/api/types'
 import { showText } from '@/stores/text'
 
 const emit = defineEmits<{
@@ -260,9 +327,17 @@ const lyricsRef = ref<HTMLElement>()
 const progressRef = ref<HTMLElement>()
 const isDragging = ref(false)
 
+// 歌词显示控制
+const showOriginal = ref(true)
+const showTranslation = ref(true)
+const showRomaji = ref(false)
+
 // 触摸相关
 const touchStartX = ref(0)
 const touchStartY = ref(0)
+const touchCurrentX = ref(0)
+const touchCurrentY = ref(0)
+const isSwiping = ref(false)
 
 // 主容器引用
 const mainContainer = ref<HTMLElement>()
@@ -288,6 +363,25 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
 })
 
+// 计算滑动偏移量
+const swipeOffsetX = ref(0)
+const swipeOffsetY = ref(0);
+watch([touchStartX, touchStartY, touchCurrentX, touchCurrentY], ([startX, startY, currentX, currentY]) => {
+  const x = currentX - startX, y = currentY - startY;
+  if (x > 10)       swipeOffsetX.value = x;
+  else if (y > 10)  swipeOffsetY.value = y;
+  else              swipeOffsetX.value = x, swipeOffsetY.value = y;
+});
+
+// 计算滑动时的透明度
+const swipeOpacity = computed(() => {
+  if (!isSwiping.value) return 1
+
+  const deltaX = Math.abs(touchCurrentX.value - touchStartX.value)
+  // 根据滑动距离调整透明度
+  return Math.max(0.7, 1 - deltaX / 200)
+})
+
 // 计算属性
 const isLiked = computed(() => {
   if (!playerStore.currentSong) return false
@@ -299,27 +393,29 @@ const togglePlay = async () => {
   await playerStore.togglePlay()
 }
 
-// 切换歌词显示
-const toggleLyrics = () => {
-  showLyrics.value = !showLyrics.value
-  if (showLyrics.value) {
-    nextTick(() => {
-      scrollToCurrentLyric()
-    })
+// 切换歌词类型显示
+const toggleLyricType = (type: 'original' | 'translation' | 'romaji') => {
+  if (type === 'original') {
+    showOriginal.value = !showOriginal.value
+  } else if (type === 'translation') {
+    showTranslation.value = !showTranslation.value
+  } else if (type === 'romaji') {
+    showRomaji.value = !showRomaji.value
   }
 }
 
 // 滚动到当前歌词
 const scrollToCurrentLyric = () => {
   if (!lyricsRef.value) return
-  const activeLyric = lyricsRef.value.querySelector('.lyric-active')
+  const activeLyric = lyricsRef.value.getElementsByClassName('lyric-active')[0];
   if (activeLyric) {
     activeLyric.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 }
 
+
 // 监听歌词变化
-watch(() => playerStore.currentLyricIndex, () => {
+watch(() => playerStore.currentLyricIndex, (newIndex) => {
   if (showLyrics.value) {
     scrollToCurrentLyric()
   }
@@ -360,6 +456,11 @@ const showPlaylist = () => {
 // 播放指定索引
 const playAtIndex = (index: number) => {
   playerStore.playAtIndex(index)
+}
+
+// 播放指定歌词
+const playLrc = (lyric: ILyric) => {
+  playerStore.seek(lyric.time);
 }
 
 // 移除歌曲
@@ -457,7 +558,7 @@ const showMore = () => {
     },
     {
       label: isLiked.value ? '取消收藏' : '收藏',
-      icon: svg.love,
+      icon: isLiked.value ? svg.love.replace('currentColor', 'red') : svg.love,
       callback: toggleLike
     },
     {
@@ -489,32 +590,69 @@ const toggleLike = async () => {
   await userStore.toggleLike(playerStore.currentSong.id)
 }
 
-// 页面触摸事件（切歌）
+// 页面触摸事件（切换播放界面和歌词界面）
 const handleTouchStart = (e: TouchEvent) => {
   touchStartX.value = e.touches[0].clientX
   touchStartY.value = e.touches[0].clientY
+  touchCurrentX.value = e.touches[0].clientX
+  touchCurrentY.value = e.touches[0].clientY
+  isSwiping.value = false
 }
 
-const handleTouchMove = (_e: TouchEvent) => {
-  // 防止默认行为
+const handleTouchMove = (e: TouchEvent) => {
+  // 更新当前触摸位置
+  touchCurrentX.value = e.touches[0].clientX
+  touchCurrentY.value = e.touches[0].clientY
+
+  // 计算滑动距离
+  const deltaX = Math.abs(touchCurrentX.value - touchStartX.value)
+  const deltaY = Math.abs(touchCurrentY.value - touchStartY.value)
+
+  // 判断是否为有效滑动
+  if (deltaX > 10 || deltaY > 10) {
+    isSwiping.value = true
+  }
 }
 
 const handleTouchEnd = (e: TouchEvent) => {
+  if (!isSwiping.value) return
+
   const endX = e.changedTouches[0].clientX
   const endY = e.changedTouches[0].clientY
 
   const direction = getSwipeDirection(touchStartX.value, touchStartY.value, endX, endY)
 
-  if (direction === 'left') {
-    playerStore.next()
-  } else if (direction === 'right') {
-    playerStore.prev()
+  // 在播放界面时，向左滑动切换到歌词界面
+  if (!showLyrics.value && direction === 'left') {
+    showLyrics.value = true
+    nextTick(() => {
+      scrollToCurrentLyric()
+    })
   }
+  // 在歌词界面时，向右滑动切换回播放界面
+  else if (showLyrics.value && direction === 'right') {
+    showLyrics.value = false
+  }
+  // 在播放界面时，上下滑动切歌
+  else if (!showLyrics.value) {
+    if (direction === 'up') {
+      playerStore.next()
+    } else if (direction === 'down') {
+      playerStore.prev()
+    }
+  }
+
+  isSwiping.value = false
+  swipeOffsetX.value = swipeOffsetY.value = 0
 }
 
 // 返回
 const goBack = () => {
-  emit('close')
+  if (showLyrics.value) {
+    showLyrics.value = false
+  } else {
+    emit('close')
+  }
 }
 
 onMounted(() => {
@@ -542,21 +680,20 @@ onMounted(() => {
 }
 
 .player-background {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: -1;
+  z-index: $z-modal -1;
 
   .bg-image {
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100svh;
+    height: 100vh;
     object-fit: cover;
-    filter: blur(3.75rem
-        /* 60px */
-      ) brightness(0.4);
-    transform: scale(1.2);
+    filter: blur(2.5rem);
+    transform: scale(1.1);
   }
 
   .bg-overlay {
@@ -565,7 +702,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%);
+    background: rgba($bg-primary, 0.7);
   }
 }
 
@@ -574,116 +711,76 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
-  padding-top: calc(#{$spacing-md} + env(safe-area-inset-top));
-}
-
-.header-spacer {
-  flex: 1;
+  z-index: $z-sticky;
+  background: transparent;
 }
 
 .header-btn {
-  flex-shrink: 0;
-  width: 2.5rem; // 2.5rem /* 40px */
-  height: 2.5rem; // 2.5rem /* 40px */
+  width: 2.25rem;
+  height: 2.25rem;
   @include flex-center;
   color: white;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(0.625rem
-      /* 10px */
-    );
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(0.625rem);
   transition: all $transition-fast $ease-default;
-
-  &:active {
-    background: rgba(255, 255, 255, 0.2);
-  }
+  flex-shrink: 0;
 
   svg {
-    width: 1.25rem; // 1.25rem /* 20px */
-    height: 1.25rem; // 1.25rem /* 20px */
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }
 
 .header-info {
-  flex-grow: 1;
-  overflow: hidden;
+  flex: 1;
+  margin: 0 $spacing-md;
+  cursor: pointer;
   text-align: center;
-  padding: 0 $spacing-md;
-}
+  overflow: hidden;
 
-.info-title {
-  font-size: $font-md;
-  font-weight: 500;
-  color: white;
-  margin-bottom: 0.125rem; // 0.125rem /* 2px */
-}
+  .info-title {
+    font-size: $font-md;
+    font-weight: 500;
+    color: white;
+    margin-bottom: 0.25rem;
+  }
 
-.fm-badge {
-  font-size: $font-xs;
-  padding: 0.125rem 0.5rem; // 0.125rem /* 2px */ 0.5rem /* 8px */
-  background: $gradient-primary;
-  color: white;
-  border-radius: $radius-full;
-  font-weight: 400;
-}
+  .info-artist {
+    font-size: $font-sm;
+    color: rgba(255, 255, 255, 0.7);
+  }
 
-.info-artist {
-  font-size: $font-xs;
-  color: rgba(255, 255, 255, 0.6);
+  .fm-badge {
+    display: inline-block;
+    padding: calc($spacing-xxs / 2) $spacing-sm;
+    margin-left: $spacing-xs;
+    font-size: 0.625rem;
+    color: white;
+    background: $primary-color;
+    border-radius: $radius-full;
+  }
 }
 
 .player-main {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+  flex-direction: column;
   overflow: hidden;
-}
-
-.album-area {
-  flex: 1;
-  position: relative;
-  transition: all $transition-normal $ease-default;
-  box-sizing: border-box;
-  height: 100%;
-  width: 100%;
-  padding: 0 $spacing-lg;
-
-  >* {
-    margin: auto;
-    max-width: 94vw;
-    max-height: 100%;
-  }
-
-  &.album-lyric {
-    opacity: 0;
-    transform: scale(0.8);
-    pointer-events: none;
-  }
 }
 
 .album-container {
   position: relative;
-  width: 80vw;
-  height: 80vw;
-  max-width: 20rem; // 20rem /* 320px */
-  max-height: 20rem; // 20rem /* 320px */
-}
-
-.album-card {
-  width: 100%;
-  height: 100%;
-  border-radius: 1.25rem; // 1.25rem /* 20px */
-  overflow: hidden;
-  box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.3); // 0 1.25rem /* 20px */ 2.5rem /* 40px */
-  background: $bg-card;
+  margin-bottom: 2.5rem;
   transition: all $transition-normal $ease-default;
-  box-sizing: border-box;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-lg;
+  position: relative;
+  margin: 0 auto;
 
-  &:hover {
-    transform: translateY(-0.3125rem); // -0.25rem /* 5px */
-    box-shadow: 0 1.5625rem 3.125rem rgba(0, 0, 0, 0.4); // 0 1.5rem /* 25px */ 3.125rem /* 50px */
+  &:active {
+    transform: scale(0.95);
   }
 }
 
@@ -691,444 +788,354 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .album-placeholder {
   width: 100%;
   height: 100%;
   @include flex-center;
-  color: $text-muted;
-  background: $bg-card;
+  background: $bg-secondary;
+  color: $text-tertiary;
 
   svg {
-    width: 3.75rem; // 3.75rem /* 60px */
-    height: 3.75rem; // 3.75rem /* 60px */
+    width: 4rem;
+    height: 4rem;
   }
 }
 
-.lyric-hint {
-  margin-top: $spacing-xl;
-  font-size: $font-xs;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.lyrics-area {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: $spacing-lg;
+.album-area {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  // padding: $spacing-md;
+  transition: transform $transition-normal $ease-out, opacity $transition-normal $ease-out;
+
+  // limit width
+  max-width: 90vw;
+  margin: 0 auto;
+}
+
+.lyrics-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 50vh $spacing-md;
+  position: relative;
+  transition: transform $transition-normal $ease-out, opacity $transition-normal $ease-out;
+
+  &::-webkit-scrollbar {
+    display: none
+  }
 }
 
 .lyrics-empty {
-  height: 100%;
   @include flex-center;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: $font-sm;
-}
-
-.lyrics-list {
-  flex: 1;
-  overflow-y: auto;
-  @include scrollbar;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-  padding: 50% 0;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .lyric-line {
-  text-align: center;
-  font-size: $font-md;
+  font-size: $font-lg;
   color: rgba(255, 255, 255, 0.5);
-  line-height: 1.6;
-  transition: all $transition-fast $ease-default;
+  text-align: center;
+  transition: all $transition-normal $ease-default;
+  border-radius: .25rem;
+  padding: $spacing-md;
+  line-height: 1.5;
 
   &.lyric-active {
-    font-size: $font-lg;
     color: white;
+    font-size: $font-xl;
     font-weight: 500;
   }
-}
 
-.lyric-trans {
-  display: block;
-  font-size: $font-xs;
-  color: rgba(255, 255, 255, 0.4);
-  margin-top: 0.125rem; // 0.125rem /* 2px */
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .lyric-original {
+    display: block;
+  }
+
+  .lyric-trans {
+    display: block;
+    font-size: $font-sm;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .lyric-romaji {
+    display: block;
+    font-size: $font-sm;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+  }
 }
 
 .player-footer {
   padding: $spacing-lg;
-  padding-bottom: calc(#{$spacing-lg} + env(safe-area-inset-bottom));
-}
-
-.info-title {
-  font-size: $font-lg;
-  font-weight: 500;
-  color: $text-primary;
-  margin-bottom: 0.25rem; // 0.25rem /* 4px */
-}
-
-.song-name {
-  font-size: $font-xl;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.25rem; // 0.25rem /* 4px */
-}
-
-.song-artist {
-  font-size: $font-sm;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.like-btn {
-  width: 2.5rem
-    /* 40px */
-  ;
-  height: 2.5rem
-    /* 40px */
-  ;
-  @include flex-center;
-  color: rgba(255, 255, 255, 0.6);
-  transition: all $transition-fast $ease-default;
-
-  &.liked {
-    color: $primary-color;
-  }
-
-  &.header-like-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    margin-right: $spacing-sm;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    &.liked {
-      background: rgba($primary-color, 0.2);
-
-      &:hover {
-        background: rgba($primary-color, 0.3);
-      }
-    }
-  }
-
-  svg {
-    width: 1.5rem; // 1.5rem /* 24px */
-    height: 1.5rem; // 1.5rem /* 24px */
-  }
+  // background: linear-gradient(0deg, rgba($bg-primary, 0.95) 0%, rgba($bg-primary, 0.7) 100%);
+  backdrop-filter: blur(1rem);
 }
 
 .progress-area {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
   margin-bottom: $spacing-lg;
+  gap: $spacing-md;
 }
 
 .time-current,
 .time-total {
-  font-size: 0.625rem; // 0.625rem /* 10px */
-  color: rgba(255, 255, 255, 0.6);
-  min-width: 2.25rem; // 2.25rem /* 36px */
-}
-
-.time-current {
-  text-align: left;
-}
-
-.time-total {
-  text-align: right;
+  font-size: $font-xs;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 2.5rem;
+  text-align: center;
 }
 
 .progress-bar {
   flex: 1;
-  height: 1.25rem; // 1.25rem /* 20px */
-  display: flex;
-  align-items: center;
+  height: 0.25rem;
   position: relative;
   cursor: pointer;
 }
 
 .progress-track {
   width: 100%;
-  height: 0.1875rem; // 0.25rem /* 3px */
-  background: rgba(255, 255, 255, 0.2);
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: $radius-full;
-  overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: $primary-color;
+  background: white;
   border-radius: $radius-full;
-  transition: width $transition-fast linear;
+  transition: width 0.1s linear;
 }
 
 .progress-thumb {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 0.75rem; // 0.75rem /* 12px */
-  height: 0.75rem; // 0.75rem /* 12px */
+  width: 0.75rem;
+  height: 0.75rem;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3); // 0 0.125rem /* 2px */ 0.25rem /* 4px */
-  transition: left $transition-fast linear;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0.5remrgba(0, 0, 0, 0.3);
+  transition: left 0.1s linear;
 }
 
 .controls-area {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
 }
 
 .control-btn {
+  width: 3rem;
+  height: 3rem;
+  @include flex-center;
   color: white;
-  transition: all $transition-fast $ease-default;
-
-  &:active {
-    transform: scale(0.9);
-  }
+  // border-radius: 50%;
+  // background: rgba(255, 255, 255, 0.1);
+  // backdrop-filter: blur(0.5rem);
+  // transition: all $transition-fast $ease-default;
+  border: none;
 
   svg {
-    width: 1.5rem; // 1.5rem /* 24px */
-    height: 1.5rem; // 1.5rem /* 24px */
-  }
-
-  &.lg svg {
-    width: 2rem; // 2rem /* 32px */
-    height: 2rem; // 2rem /* 32px */
-  }
-
-  &.btn-trash {
-    color: #ff4757;
-  }
-
-  &.btn-skip {
-    color: $primary-color;
-  }
-
-  &.btn-like {
-    width: 2.5rem; // 2.5rem /* 40px */
-    height: 2.5rem; // 2.5rem /* 40px */
-    color: rgba(255, 255, 255, 0.6);
-    transition: all $transition-fast $ease-default;
-
-    &.liked {
-      color: $primary-color;
-    }
-
-    svg {
-      width: 1.5rem; // 1.5rem /* 24px */
-      height: 1.5rem; // 1.5rem /* 24px */
-    }
-  }
-
-  &.btn-list {
-    width: 2.5rem; // 2.5rem /* 40px */
-    height: 2.5rem; // 2.5rem /* 40px */
-    opacity: 0.7;
-  }
-
-  &.btn-prev,
-  &.btn-next {
-    width: 3.125rem; // 3.125rem /* 50px */
-    height: 3.125rem; // 3.125rem /* 50px */
-
-    svg {
-      width: 2rem; // 2rem /* 32px */
-      height: 2rem; // 2rem /* 32px */
-    }
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   &.btn-play {
-    width: 4rem
-      /* 64px */
-    ;
-    height: 4rem
-      /* 64px */
-    ;
-    background: $gradient-primary;
+    width: 4rem;
+    height: 4rem;
+    background: $primary-color;
+    // color: $bg-primary;
     border-radius: 50%;
-    box-shadow: 0 0.25rem
-      /* 4px */
-      1rem
-      /* 15px */
-      rgba($primary-color, 0.4);
 
     svg {
-      width: 1.75rem
-        /* 28px */
-      ;
-      height: 1.75rem
-        /* 28px */
-      ;
-    }
-
-    &.btn-loading {
-      background: $bg-hover;
+      width: 2rem;
+      height: 2rem;
     }
   }
 
-  &.btn-mode,
-  &.btn-clear {
-    padding: .35rem;
+  &.btn-loading {
+    background: white;
+  }
+
+  &.liked {
+    color: $primary-color;
+  }
+
+  &.lg {
+    width: 2.5rem;
+    height: 2.5rem;
+
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  &.red {
+    color: rgb(255, 132, 132);
+  }
+}
+
+.lyrics-footer {
+  padding: $spacing-md;
+  background: linear-gradient(0deg, rgba($bg-primary, 0.95) 0%, rgba($bg-primary, 0.7) 100%);
+  backdrop-filter: blur(1rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lyric-btn {
+  color: rgba(255, 255, 255, 0.7);
+  transition: all $transition-fast $ease-default;
+  border: none;
+  font-size: $font-sm;
+  font-weight: 500;
+  padding: $spacing-xs $spacing-sm;
+  margin-right: $spacing-xs;
+  border-radius: .5rem;
+
+  &.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.lyrics-player-controls {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+
+  >* {
+    width: 2rem;
+    height: 2rem;
 
     >svg {
-      width: 1.25rem;
-      height: 1.25rem;
-      opacity: .8;
-      display: block;
+      width: 1.5rem;
+      height: 1.5rem;
     }
   }
 }
 
-// 播放列表弹窗
 .playlist-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(0.625rem
-      /* 10px */
-    );
+  background: rgba(0, 0, 0, 0.5);
   z-index: $z-modal;
-  display: flex;
-  align-items: flex-end;
+  @include flex-center;
 }
 
 .playlist-panel {
   width: 100%;
-  max-height: 85vh;
-  background: $bg-card;
-  border-radius: $radius-xl $radius-xl 0 0;
+  max-width: $screen-width;
+  height: 80vh;
+  background: rgba($bg-card, .4);
+  border-radius: $radius-lg $radius-lg 0 0;
+  backdrop-filter: blur(.75rem);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  bottom: 0;
+  position: absolute;
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 0.0625rem
-    /* 1px */
-    solid $border-color;
+  padding: 0 $spacing-lg;
+  border-bottom: 0.1rem solid $border-color;
+  background-color: $bg-card;
+
+  h3 {
+    font-size: $font-lg;
+    font-weight: 600;
+    color: $text-primary;
+  }
 }
 
 .panel-actions {
   display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-h3 {
-  font-size: $font-md;
-  font-weight: 500;
-  color: $text-primary;
-}
-
-.clear-btn {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  font-size: $font-sm;
-  color: $text-tertiary;
-
-  svg {
-    width: 1rem
-      /* 16px */
-    ;
-    height: 1rem
-      /* 16px */
-    ;
-  }
+  gap: $spacing-md;
 }
 
 .panel-list {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-sm 0;
-  @include scrollbar;
 }
 
 .panel-item {
   display: flex;
   align-items: center;
-  padding: $spacing-sm $spacing-lg;
-  cursor: pointer;
-  transition: background $transition-fast $ease-default;
-
-  &:active {
-    background: $bg-hover;
-  }
+  padding: $spacing-md 0 $spacing-md $spacing-lg;
+  border-bottom: 0.0625remsolid rgba($border-color, 0.5);
+  transition: background-color $transition-fast $ease-default;
+  width: 100%;
+  overflow: hidden;
 
   &.item-active {
-    .item-name {
-      color: $primary-color;
-    }
+    background: rgba($primary-color, 0.1);
+  }
+
+  &:hover {
+    background: rgba($primary-color, 0.05);
   }
 }
 
 .item-info {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1;
+  margin-right: $spacing-md;
+  overflow: hidden;
 }
 
 .item-name {
-  font-size: $font-sm;
+  font-size: $font-md;
   color: $text-primary;
-  margin-bottom: 0.125rem
-    /* 2px */
-  ;
+  margin-bottom: 0.25rem;
 }
 
 .item-artist {
-  font-size: $font-xs;
-  color: $text-tertiary;
+  font-size: $font-sm;
+  color: $text-secondary;
 }
 
 .item-remove {
-  width: 2rem
-    /* 32px */
-  ;
-  height: 2rem
-    /* 32px */
-  ;
+  width: 2rem;
+  height: 2rem;
   @include flex-center;
-  color: $text-muted;
+  color: $text-tertiary;
+  border-radius: 50%;
+  transition: all $transition-fast $ease-default;
+
+  &:hover {
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+  }
 
   svg {
-    width: 1rem
-      /* 16px */
-    ;
-    height: 1rem
-      /* 16px */
-    ;
+    width: 1rem;
+    height: 1rem;
   }
 }
 
 .slide-up-enter-active,
 .slide-up-leave-active {
-  transition: all $transition-normal $ease-default;
+  transition: transform $transition-normal $ease-default;
 }
 
 .slide-up-enter-from,
 .slide-up-leave-to {
-  opacity: 0;
-
-  .playlist-panel {
-    transform: translateY(100%);
-  }
+  transform: translateY(100%);
 }
 </style>

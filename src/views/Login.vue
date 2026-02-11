@@ -1,15 +1,7 @@
 <template>
   <div class="login-page">
     <!-- 头部 -->
-    <header class="login-header">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="header-title">登录</h1>
-      <div class="header-placeholder"></div>
-    </header>
+    <PageHeader title="登录" :default-action="true" />
     
     <!-- 登录方式切换 -->
     <div class="login-tabs">
@@ -121,6 +113,7 @@ import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
 import Loading from '@/components/Loading.vue'
 import { showText } from '@/stores/text'
+import PageHeader from '@/components/common/PageHeader.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -363,42 +356,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: $gradient-bg;
-}
-
-.login-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  padding-top: calc(#{$spacing-md} + env(safe-area-inset-top));
-}
-
-.header-back {
-  width: 2.5rem /* 40px */;
-  height: 2.5rem /* 40px */;
-  @include flex-center;
-  color: $text-primary;
-  border-radius: 50%;
-  transition: all $transition-fast $ease-default;
-  
-  &:active {
-    background: $bg-card;
-  }
-  
-  svg {
-    width: 1.375rem /* 22px */;
-    height: 1.375rem /* 22px */;
-  }
-}
-
-.header-title {
-  font-size: $font-lg;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.header-placeholder {
-  width: 2.5rem /* 40px */;
 }
 
 .login-tabs {

@@ -23,13 +23,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 
 interface Props {
   title?: string
   showBack?: boolean
   transparent?: boolean
   alwaysShowTitle?: boolean
-  scrollThreshold?: number
+  scrollThreshold?: number,
+  defaultAction?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,7 +39,8 @@ const props = withDefaults(defineProps<Props>(), {
   showBack: true,
   transparent: false,
   alwaysShowTitle: false,
-  scrollThreshold: 200
+  scrollThreshold: 200,
+  defaultAction: false
 })
 
 const emit = defineEmits<{
@@ -47,8 +50,11 @@ const emit = defineEmits<{
 
 const isScrolled = ref(false)
 
+const router = useRouter();
 const handleBack = () => {
   emit('back')
+  if (props.defaultAction)
+    router.back();
 }
 
 const handleScroll = () => {
@@ -81,7 +87,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
   padding-top: calc(#{$spacing-md} + env(safe-area-inset-top));
-  z-index: $z-sticky;
+  z-index: $z-sticky + 10;
   transition: all $transition-normal $ease-default;
 
   &.transparent {

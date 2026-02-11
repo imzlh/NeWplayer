@@ -1,13 +1,6 @@
 <template>
   <div class="history-page">
-    <header class="history-header">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="header-title">播放历史</h1>
-    </header>
+    <PageHeader title="播放历史" :default-action="true" />
     
     <main class="history-content">
       <div v-if="playHistory.length === 0" class="history-empty">
@@ -34,7 +27,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import type { ISong, ISongDetail } from '@/api/types'
 import SongListItem from '@/components/SongListItem.vue'
@@ -42,8 +34,8 @@ import { shallowRef } from 'vue'
 import { getUserRecord } from '@/api'
 import { useUserStore } from '@/stores/user'
 import { songDetail2Song } from '@/api/helper'
+import PageHeader from '@/components/common/PageHeader.vue'
 
-const router = useRouter()
 const playerStore = usePlayerStore()
 const userStore = useUserStore();
 const playHistory = shallowRef<ISongDetail[]>([]);
@@ -55,8 +47,6 @@ const playSong = async (song: ISong) => {
 getUserRecord(userStore.userId, 0).then(res => {
   playHistory.value = res.allData?.map(e => e.song) || [];
 });
-
-const goBack = () => router.back()
 </script>
 
 <style scoped lang="scss">
@@ -65,42 +55,6 @@ const goBack = () => router.back()
 .history-page {
   min-height: 100vh;
   padding-bottom: 7.5rem /* 120px */;
-}
-
-.history-header {
-  position: sticky;
-  top: 0;
-  z-index: $z-sticky;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  background: rgba($bg-primary, 0.95);
-  backdrop-filter: blur(1.25rem /* 20px */);
-}
-
-.header-back{
-  width: 2.5rem /* 40px */;
-  height: 2.5rem /* 40px */;
-  @include flex-center;
-  color: $text-secondary;
-  border-radius: 50%;
-  transition: all $transition-fast $ease-default;
-  
-  &:active {
-    background: $bg-card;
-  }
-  
-  svg {
-    width: 1.375rem /* 22px */;
-    height: 1.375rem /* 22px */;
-  }
-}
-
-.header-title {
-  font-size: $font-lg;
-  font-weight: 600;
-  color: $text-primary;
 }
 
 .history-content {

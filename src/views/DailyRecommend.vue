@@ -1,16 +1,8 @@
 <template>
   <div class="daily-page">
-    <header class="daily-header" :class="{ 'header-scrolled': headerScrolled }">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="header-title" :class="{ 'title-visible': headerScrolled }">每日推荐</h1>
-      <div class="header-placeholder"></div>
-    </header>
+    <PageHeader title="每日推荐" :default-action="true" />
     
-    <main class="daily-content" ref="contentRef" @scroll="handleScroll">
+    <main class="daily-content" ref="contentRef">
       <section class="daily-info">
         <div class="info-calendar">
           <span class="calendar-day">{{ today.getDate() }}</span>
@@ -59,7 +51,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import * as api from '@/api'
 import type { ISong, ISong2Recommend } from '@/api/types'
@@ -67,14 +58,12 @@ import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
 import { showDefaultSongActions } from '@/utils/action'
 import { svg } from '@/utils/svg'
+import PageHeader from '@/components/common/PageHeader.vue'
 
-const router = useRouter()
 const playerStore = usePlayerStore()
 
 const songs = ref<ISong[]>([])
 const loading = ref(false)
-const headerScrolled = ref(false)
-const contentRef = ref<HTMLElement>()
 const today = new Date()
 
 const fetchDailySongs = async () => {
@@ -116,15 +105,6 @@ const playSong = async (song: ISong, index: number) => {
     playerStore.setPlaylist(songs.value, index)
   }
 }
-
-const handleScroll = () => {
-  if (contentRef.value) {
-    headerScrolled.value = contentRef.value.scrollTop > 100
-  }
-}
-
-const goBack = () => router.back()
-
 const showMoreOptions = (song: ISong) => {
   showDefaultSongActions(song, [
     {
@@ -144,57 +124,6 @@ onMounted(fetchDailySongs)
 .daily-page {
   min-height: 100vh;
   padding-bottom: 7.5rem /* 120px */;
-}
-
-.daily-header {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: $screen-width;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  z-index: $z-sticky;
-  transition: all $transition-normal $ease-default;
-  
-  &.header-scrolled {
-    background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(1.25rem /* 20px */);
-  }
-}
-
-.header-back {
-  width: 2.25rem /* 36px */;
-  height: 2.25rem /* 36px */;
-  @include flex-center;
-  color: white;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(0.625rem /* 10px */);
-  
-  svg {
-    width: 1.25rem /* 20px */;
-    height: 1.25rem /* 20px */;
-  }
-}
-
-.header-title {
-  font-size: $font-md;
-  font-weight: 500;
-  color: white;
-  opacity: 0;
-  transition: opacity $transition-normal $ease-default;
-  
-  &.title-visible {
-    opacity: 1;
-  }
-}
-
-.header-placeholder {
-  width: 2.25rem /* 36px */;
 }
 
 .daily-content {

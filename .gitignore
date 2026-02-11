@@ -26,3 +26,4 @@ dist-ssr
 # Generated files
 /*.js
 tsconfig.tsbuildinfo
+.codeartsdoer

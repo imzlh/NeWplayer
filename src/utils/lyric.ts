@@ -2,13 +2,15 @@ import type { ILyric } from '@/api/types'
 // import I_DEFAULT from 'public/'
 
 // 解析歌词
-export const parseLyric = (lrc: string, tlyric?: string): ILyric[] => {
+export const parseLyric = (lrc: string, tlyric?: string, rlyric?: string): ILyric[] => {
   const lyrics: ILyric[] = []
-  const lrcMap = new Map<number, string>()
-  const transMap = new Map<number, string>()
+  const maps = {
+    text: new Map<number, string>(),
+    transText: new Map<number, string>(),
+    romaji: new Map<number, string>(),
+  }
 
-  // 解析原歌词
-  if (lrc) {
+  function parse(lrc: string, to: keyof typeof maps) {
     const lines = lrc.split('\n')
     lines.forEach((line) => {
       const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/)
@@ -19,36 +21,28 @@ export const parseLyric = (lrc: string, tlyric?: string): ILyric[] => {
         const time = min * 60 + sec + ms / 1000
         const text = match[4].trim()
         if (text) {
-          lrcMap.set(time, text)
+          maps[to].set(time, text)
         }
       }
     })
   }
+
+  // 解析原歌词
+  if (lrc) parse(lrc, 'text')
 
   // 解析翻译歌词
-  if (tlyric) {
-    const lines = tlyric.split('\n')
-    lines.forEach((line) => {
-      const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/)
-      if (match) {
-        const min = parseInt(match[1])
-        const sec = parseInt(match[2])
-        const ms = parseInt(match[3].padEnd(3, '0'))
-        const time = min * 60 + sec + ms / 1000
-        const text = match[4].trim()
-        if (text) {
-          transMap.set(time, text)
-        }
-      }
-    })
-  }
+  if (tlyric) parse(tlyric, 'transText')
+
+  // 解析罗马字歌词
+  if (rlyric) parse(rlyric, 'romaji')
 
   // 合并歌词
-  lrcMap.forEach((text, time) => {
+  maps.text.forEach((text, time) => {
     lyrics.push({
       time,
       text,
-      transText: transMap.get(time),
+      transText: maps.transText.get(time),
+      romaji: maps.romaji.get(time)
     })
   })
 
@@ -128,7 +122,7 @@ export const shuffleArray = <T>(array: T[]): T[] => {
   const newArray = [...array]
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+      ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
   }
   return newArray
 }

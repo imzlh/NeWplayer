@@ -4,7 +4,7 @@
       :title="headerScrolled ? '用户主页' : ''" 
       :show-back="true"
       :scroll-threshold="200"
-      @back="goBack"
+      :default-action="true"
       @scroll="handleHeaderScroll"
     />
 
@@ -105,12 +105,10 @@
         </div>
       </section>
 
-      <!-- 创建的歌单 -->
       <section v-if="currentTab === 'created'" class="playlists-section">
         <PlaylistList :user-id="userId" :show-tabs="false" :playlist-type="'created'" />
       </section>
 
-      <!-- 收藏的歌单 -->
       <section v-if="currentTab === 'collected'" class="playlists-section">
         <PlaylistList :user-id="userId" :show-tabs="false" :playlist-type="'collected'" />
       </section>
@@ -304,8 +302,6 @@ const handleEventClick = (event: IUserEvent) => {
   }
 }
 
-const goBack = () => router.back()
-
 onMounted(() => {
   fetchUserDetail()
   fetchUserEvents(true)
@@ -322,6 +318,7 @@ onMounted(() => {
 }
 
 .user-header {
+  margin-top: 2rem;
   position: relative;
   padding: $spacing-xl $spacing-lg;
   overflow: hidden;

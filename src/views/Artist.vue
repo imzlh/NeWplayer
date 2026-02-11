@@ -1,16 +1,8 @@
 <template>
   <div class="artist-page">
-    <header class="artist-header" :class="{ 'header-scrolled': headerScrolled }">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="header-title" :class="{ 'title-visible': headerScrolled }">{{ artist.name }}</h1>
-      <div class="header-placeholder"></div>
-    </header>
+    <PageHeader :title="'歌手:' + artist.name" :default-action="true" />
     
-    <main class="artist-content" ref="contentRef" @scroll="handleScroll">
+    <main class="artist-content" ref="contentRef">
       <section class="artist-info">
         <div class="info-cover">
           <img :src="getImageUrl(artist.picUrl, 300, 300)" :alt="artist.name" class="cover-image"/>
@@ -99,6 +91,7 @@ import { getImageUrl, formatDate } from '@/utils/lyric'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
 import { showText } from '@/stores/text'
+import PageHeader from '@/components/common/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -111,10 +104,8 @@ const hotSongs = ref<ISong[]>([])
 const albums = ref<IAlbum[]>([])
 const artistDesc = ref('')
 const loading = ref(false)
-const headerScrolled = ref(false)
 const isFollowed = ref(false)
 const activeTab = ref('songs')
-const contentRef = ref<HTMLElement>()
 
 const tabs = [
   { key: 'songs', name: '热门歌曲' },
@@ -190,14 +181,6 @@ const toggleFollow = async () => {
     console.error('关注操作失败:', error)
   }
 }
-
-const handleScroll = () => {
-  if (contentRef.value) {
-    headerScrolled.value = contentRef.value.scrollTop > 150
-  }
-}
-
-const goBack = () => router.back()
 const goToAlbum = (id: number) => router.push(`/album/${id}`)
 
 watch(activeTab, (newTab) => {
@@ -215,59 +198,6 @@ onMounted(fetchArtist)
 .artist-page {
   min-height: 100vh;
   padding-bottom: 7.5rem /* 120px */;
-}
-
-.artist-header {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: $screen-width;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  z-index: $z-sticky;
-  transition: all $transition-normal $ease-default;
-  
-  &.header-scrolled {
-    background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(1.25rem /* 20px */);
-  }
-}
-
-.header-back {
-  width: 2.25rem /* 36px */;
-  height: 2.25rem /* 36px */;
-  @include flex-center;
-  color: white;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(0.625rem /* 10px */);
-  
-  svg {
-    width: 1.25rem /* 20px */;
-    height: 1.25rem /* 20px */;
-  }
-}
-
-.header-title {
-  font-size: $font-md;
-  font-weight: 500;
-  color: white;
-  opacity: 0;
-  transition: opacity $transition-normal $ease-default;
-  @include text-ellipsis;
-  max-width: 12.5rem /* 200px */;
-  
-  &.title-visible {
-    opacity: 1;
-  }
-}
-
-.header-placeholder {
-  width: 2.25rem /* 36px */;
 }
 
 .artist-content {

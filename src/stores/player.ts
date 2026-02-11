@@ -49,6 +49,7 @@ export const usePlayerStore = defineStore('player', () => {
   const isLoading = ref(false)
   const failedSongs = ref<Set<number>>(new Set())
   const currentQuality = ref(getValidQuality())
+  const currentLyric = ref<ILyric | null>(null) // 改用 ref,手动更新
 
   // 私人FM相关状态（仅保留必要的）
   const fmHistory = shallowRef<ISong[]>([])
@@ -61,7 +62,6 @@ export const usePlayerStore = defineStore('player', () => {
   const playlistCount = computed(() => playlist.value.length)
   const isEmptyPlaylist = computed(() => playlistCount.value === 0)
   const currentProgressPercent = computed(() => duration.value > 0 ? (progress.value / duration.value) * 100 : 0)
-  const currentLyric = computed(() => lyrics.value[currentLyricIndex.value] || null)
   const canPlay = computed(() => hasCurrentSong.value && !failedSongs.value.has(currentSong.value!.id))
   const qualityOptions = computed(() => QUALITY_OPTIONS)
   const currentQualityOption = computed(() =>
@@ -109,6 +109,12 @@ export const usePlayerStore = defineStore('player', () => {
       isPlaying.value = false // 恢复时不自动播放
       lyrics.value = state.lyrics || []
       currentLyricIndex.value = state.currentLyricIndex || -1
+      // 恢复时更新当前歌词
+      if (lyrics.value.length > 0 && currentLyricIndex.value >= 0) {
+        currentLyric.value = lyrics.value[currentLyricIndex.value]
+      } else {
+        currentLyric.value = null
+      }
 
       if (hasCurrentSong.value) {
         await loadSong(currentSong.value!)
@@ -422,6 +428,7 @@ export const usePlayerStore = defineStore('player', () => {
     isPlaying.value = false
     lyrics.value = []
     currentLyricIndex.value = -1
+    currentLyric.value = null
     failedSongs.value.clear()
 
     if (audio.value) {
@@ -436,35 +443,66 @@ export const usePlayerStore = defineStore('player', () => {
       const res = await api.getLyric(songId)
       if (res.lrc?.lyric) {
         lyrics.value = parseLyric(res.lrc.lyric, res.tlyric?.lyric)
+        // 加载歌词后立即更新当前歌词
+        updateCurrentLyric()
       } else {
         lyrics.value = []
+        currentLyricIndex.value = -1
+        currentLyric.value = null
       }
     } catch (error) {
       console.error('获取歌词失败:', error)
       lyrics.value = []
+      currentLyricIndex.value = -1
+      currentLyric.value = null
     }
   }
 
   function updateCurrentLyric() {
-    if (lyrics.value.length === 0) {
+    const lyricList = lyrics.value
+    const count = lyricList.length
+
+    // 空歌词处理
+    if (count === 0) {
       currentLyricIndex.value = -1
+      currentLyric.value = null
       return
     }
 
     const currentTime = progress.value
-    let index = -1
 
-    for (let i = 0; i < lyrics.value.length; i++) {
-      const lyric = lyrics.value[i]
-      const nextLyric = lyrics.value[i + 1]
+    // 优化: 如果时间在当前歌词范围内,直接返回
+    const currentIndex = currentLyricIndex.value
+    let left = 0
+    let right = count - 1
+    if (currentIndex >= 0 && currentIndex < count) {
+      const current = lyricList[currentIndex]
+      const next = lyricList[currentIndex + 1]
+      if (currentTime < current.time)
+        right = currentIndex;
+      else if (next && currentTime > next.time)
+        left = currentIndex +1;
+      else
+        return; // 时间范围没变,无需更新
+    }
 
-      if (lyric.time <= currentTime && (!nextLyric || nextLyric.time > currentTime)) {
-        index = i
-        break
+    // 使用二分查找
+    let resultIndex = 0
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2)
+      if (lyricList[mid].time <= currentTime) {
+        resultIndex = mid
+        left = mid + 1
+      } else {
+        right = mid - 1
       }
     }
 
-    currentLyricIndex.value = index === -1 ? 0 : index
+    // 只在索引变化时更新
+    if (resultIndex !== currentIndex) {
+      currentLyricIndex.value = resultIndex
+      currentLyric.value = lyricList[resultIndex]
+    }
   }
 
   // ============ 歌曲播放事件处理 ============

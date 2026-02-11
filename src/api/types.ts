@@ -34,6 +34,42 @@ export interface IUserCountInfo {
   mvCount: number;              // 收藏的MV数
 }
 
+export interface IVipInfo {
+  redVipLevel: number;               // 红钻VIP等级
+  redVipLevelIcon: string;          // 红钻等级图标
+  redVipAnnualCount: number;        // 红钻年数（-1表示非年费）
+
+  // 音乐包（绿钻）
+  musicPackage?: {
+    vipCode: number;               // VIP代码（220=音乐包）
+    expireTime: number;            // 过期时间戳
+    vipLevel: number;              // VIP等级
+    iconUrl: string;              // 图标URL
+  };
+
+  // 会员（红钻）
+  associator?: {
+    vipCode: number;               // VIP代码（100=会员）
+    expireTime: number;            // 过期时间戳
+    vipLevel: number;              // VIP等级
+    iconUrl: string;              // 静态图标URL
+    dynamicIconUrl?: string;       // 动态图标URL
+  };
+
+  // 音乐包+会员（家庭VIP）
+  familyVip?: {
+    vipCode: number;               // VIP代码（600=家庭VIP）
+    expireTime: number;            // 过期时间戳
+    vipLevel: number;              // VIP等级
+  };
+
+  // 其他VIP权益
+  redplus?: {
+    vipCode: number;               // VIP代码
+    iconUrl?: string;             // 图标URL
+  };
+}
+
 // 歌曲类型
 export interface ISong {
   id: number
@@ -172,7 +208,7 @@ export interface ISong2 extends IQualitySection {
   album: IAlbum;
   ringtone: string;
   commentThreadId: string;
-  
+
   mvid: number;
   name: string;
   disc: string;
@@ -255,6 +291,14 @@ export interface IPlaylist {
   specialType: number;
 }
 
+export interface IPlaylist2 {
+  id: number;          // 歌单ID
+  name: string;       // 歌单名称
+  coverImgUrl: string; // 封面图片URL
+  playCount: number;  // 播放次数
+  specialType?: number; // 特殊类型（可选）
+}
+
 export interface IHistory {
   playCount: number
   score: number
@@ -275,10 +319,10 @@ export interface IDJProgram {
   shareCount: number;          // 分享数
   categoryId: number;          // 分类ID
   channels: string[];          // 频道标签
-  
+
   // DJ主播信息
   dj: IUser;
-  
+
   // 主歌曲信息
   mainSong: ISong2
 }
@@ -326,6 +370,7 @@ export interface ILyric {
   time: number
   text: string
   transText?: string
+  romaji?: string
 }
 
 export interface IMatch {
@@ -477,10 +522,10 @@ export interface IUserEvent {
   likedCount: number;              // 点赞数
   commentCount: number;            // 评论数
   shareCount: number;              // 分享数
-  
+
   // 发布者信息
   user: IUser;
-  
+
   json: string;                    // 动态内容JSON字符串, msg: string
 }
 

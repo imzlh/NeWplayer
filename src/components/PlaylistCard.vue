@@ -1,16 +1,11 @@
 <template>
   <div class="playlist-card" @click="handleClick">
     <div class="card-cover">
-      <img
-        :src="getImageUrl(playlist.coverImgUrl, 200, 200)"
-        :alt="playlist.name"
-        class="cover-image"
-        loading="lazy"
-      />
+      <img :src="getImageUrl(playlist.coverImgUrl, 200, 200)" :alt="playlist.name" class="cover-image" loading="lazy" />
       <div class="cover-overlay">
         <div class="play-count">
           <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z"/>
+            <path d="M8 5v14l11-7z" />
           </svg>
           <span>{{ formatNumber(playlist.playCount || 0) }}</span>
         </div>
@@ -21,17 +16,21 @@
 </template>
 
 <script setup lang="ts">
-import type { IPlaylist } from '@/api/types'
 import { getImageUrl, formatNumber } from '@/utils/lyric'
 
-interface Props {
-  playlist: IPlaylist
+export interface IPlaylistLike {
+  id: number,
+  name: string,
+  coverImgUrl: string,
+  playCount: number,
 }
 
-const props = defineProps<Props>()
+const props = defineProps<{
+  playlist: IPlaylistLike
+}>()
 
 const emit = defineEmits<{
-  click: [playlist: IPlaylist]
+  click: [playlist: IPlaylistLike]
 }>()
 
 const handleClick = () => {
@@ -56,7 +55,7 @@ const handleClick = () => {
   aspect-ratio: 1;
   border-radius: $radius-lg;
   overflow: hidden;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -74,7 +73,7 @@ const handleClick = () => {
   height: 100%;
   object-fit: cover;
   transition: transform $transition-normal $ease-default;
-  
+
   .playlist-card:hover & {
     transform: scale(1.05);
   }
@@ -90,17 +89,31 @@ const handleClick = () => {
 .play-count {
   display: flex;
   align-items: center;
-  gap: 0.125rem /* 2px */;
-  padding: 0.125rem /* 2px */ 0.375rem /* 6px */;
+  gap: 0.125rem
+    /* 2px */
+  ;
+  padding: 0.125rem
+    /* 2px */
+    0.375rem
+    /* 6px */
+  ;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(0.25rem /* 4px */);
+  backdrop-filter: blur(0.25rem
+      /* 4px */
+    );
   border-radius: $radius-full;
-  font-size: 0.625rem /* 10px */;
+  font-size: 0.625rem
+    /* 10px */
+  ;
   color: $text-primary;
-  
+
   svg {
-    width: 0.625rem /* 10px */;
-    height: 0.625rem /* 10px */;
+    width: 0.625rem
+      /* 10px */
+    ;
+    height: 0.625rem
+      /* 10px */
+    ;
   }
 }
 

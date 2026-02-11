@@ -58,7 +58,7 @@
         </div>
         <div v-else class="playlists-grid">
           <PlaylistCard v-for="playlist in recommendPlaylists" :key="playlist.id" :playlist="playlist"
-            @click="goToPlaylist" />
+            @click="goToPlaylist($event as IPlaylist)" />
         </div>
       </section>
 

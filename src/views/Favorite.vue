@@ -1,16 +1,8 @@
 <template>
   <div class="favorite-page">
-    <header class="favorite-header" :class="{ 'header-scrolled': headerScrolled }">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <h1 class="header-title" :class="{ 'title-visible': headerScrolled }">我喜欢的音乐</h1>
-      <div class="header-placeholder"></div>
-    </header>
+    <PageHeader title="我喜欢的音乐" :default-action="true" />
 
-    <main class="favorite-content" ref="contentRef" @scroll="handleScroll">
+    <main class="favorite-content" ref="contentRef">
       <section class="favorite-info">
         <div class="info-count">
           <span class="count-number">{{ likeCount }}</span>
@@ -63,22 +55,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
 import type { ISong } from '@/api/types'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 
-const router = useRouter()
 const playerStore = usePlayerStore()
 const userStore = useUserStore()
 
 const songs = ref<ISong[]>([])
 const loading = ref(false)
-const headerScrolled = ref(false)
-const contentRef = ref<HTMLElement>()
 
 // 喜欢的音乐数量
 const likeCount = computed(() => songs.value.length)
@@ -135,16 +124,6 @@ const playSong = async (song: ISong) => {
   }
 }
 
-// 滚动处理
-const handleScroll = () => {
-  if (!contentRef.value) return
-
-  const { scrollTop } = contentRef.value
-  headerScrolled.value = scrollTop > 100
-}
-
-const goBack = () => router.back()
-
 onMounted(fetchFavoriteSongs)
 </script>
 
@@ -156,58 +135,8 @@ onMounted(fetchFavoriteSongs)
   padding-bottom: 120px;
 }
 
-.favorite-header {
-  position: sticky;
-  top: 0;
-  z-index: $z-sticky;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  background: rgba($bg-primary, 0.95);
-  backdrop-filter: blur(20px);
-  transition: all $transition-fast $ease-default;
-}
-
-.header-back {
-  width: 40px;
-  height: 40px;
-  @include flex-center;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 50%;
-  color: $text-primary;
-  transition: all $transition-fast $ease-default;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.header-title {
-  font-size: $font-lg;
-  font-weight: 600;
-  color: $text-primary;
-  margin: 0;
-  opacity: 0;
-  transition: opacity $transition-fast $ease-default;
-
-  &.title-visible {
-    opacity: 1;
-  }
-}
-
-.header-placeholder {
-  width: 40px;
-}
-
 .favorite-content {
-  padding: $spacing-lg;
+  padding: 3rem $spacing-lg $spacing-lg $spacing-lg;
 }
 
 .favorite-info {
@@ -220,7 +149,7 @@ onMounted(fetchFavoriteSongs)
 }
 
 .count-number {
-  font-size: 36px;
+  font-size: $font-xl * 2;
   font-weight: 700;
   color: $primary-color;
   display: block;

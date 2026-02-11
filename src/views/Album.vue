@@ -1,23 +1,18 @@
 <template>
   <div class="album-page">
-    <header class="album-header" :class="{ 'header-scrolled': headerScrolled }">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="header-title" :class="{ 'title-visible': headerScrolled }">{{ album.name }}</h1>
-      <!-- 评论入口 -->
-      <div v-if="songs.length > 0" class="comment-entry">
-        <button class="comment-btn header-back" @click="showComments = true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </button>
-      </div>
-    </header>
+    <PageHeader title="专辑详情" :default-action="true">
+      <template v-slot:actions>
+        <div v-if="songs.length > 0" class="comment-entry">
+          <button class="comment-btn header-back" @click="showComments = true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </button>
+        </div>
+      </template>
+    </PageHeader>
     
-    <main class="album-content" ref="contentRef" @scroll="handleScroll">
+    <main class="album-content" ref="contentRef">
       <section class="album-info">
         <div class="info-cover">
           <img :src="getImageUrl(album.picUrl, 300, 300)" :alt="album.name" class="cover-image"/>
@@ -95,6 +90,7 @@ import { getImageUrl, formatDate } from '@/utils/lyric'
 import SongListItem from '@/components/SongListItem.vue'
 import Loading from '@/components/Loading.vue'
 import Comment from '@/components/Comment.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,12 +101,10 @@ const albumId = computed(() => Number(route.params.id))
 const album = ref<Partial<AlbumType>>({ id: 0, name: '', picUrl: '', publishTime: 0 })
 const songs = ref<ISong[]>([])
 const loading = ref(false)
-const headerScrolled = ref(false)
 const isCollected = ref(false)
 
 // 评论相关状态
 const showComments = ref(false)
-const contentRef = ref<HTMLElement>()
 
 const fetchAlbum = async () => {
   loading.value = true
@@ -161,13 +155,6 @@ const toggleCollect = async () => {
   }
 }
 
-const handleScroll = () => {
-  if (contentRef.value) {
-    headerScrolled.value = contentRef.value.scrollTop > 150
-  }
-}
-
-const goBack = () => router.back()
 const goToArtist = (id?: number) => id && router.push(`/artist/${id}`)
 
 onMounted(fetchAlbum)
@@ -179,59 +166,6 @@ onMounted(fetchAlbum)
 .album-page {
   min-height: 100vh;
   padding-bottom: 7.5rem /* 120px */;
-}
-
-.album-header {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: $screen-width;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  z-index: $z-sticky;
-  transition: all $transition-normal $ease-default;
-  
-  &.header-scrolled {
-    background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(1.25rem /* 20px */);
-  }
-}
-
-.header-back {
-  width: 2.25rem /* 36px */;
-  height: 2.25rem /* 36px */;
-  @include flex-center;
-  color: white;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(0.625rem /* 10px */);
-  
-  svg {
-    width: 1.25rem /* 20px */;
-    height: 1.25rem /* 20px */;
-  }
-}
-
-.header-title {
-  font-size: $font-md;
-  font-weight: 500;
-  color: white;
-  opacity: 0;
-  transition: opacity $transition-normal $ease-default;
-  @include text-ellipsis;
-  max-width: 12.5rem /* 200px */;
-  
-  &.title-visible {
-    opacity: 1;
-  }
-}
-
-.header-placeholder {
-  width: 2.25rem /* 36px */;
 }
 
 .album-content {

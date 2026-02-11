@@ -1,26 +1,19 @@
 <template>
   <div class="playlist-page">
-    <!-- 头部 -->
-    <header class="playlist-header" :class="{ 'header-scrolled': headerScrolled }">
-      <button class="header-back" @click="goBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <h1 class="header-title" :class="{ 'title-visible': headerScrolled }">
-        {{ playlist.name }}
-      </h1>
-      <button class="header-more" @click="showMoreActions">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="5" r="1" />
-          <circle cx="12" cy="12" r="1" />
-          <circle cx="12" cy="19" r="1" />
-        </svg>
-      </button>
-    </header>
+    <PageHeader :title="playlist.name" :default-action="true">
+      <template v-slot:actions >
+        <button class="header-more" @click="showMoreActions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="5" r="1" />
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="12" cy="19" r="1" />
+          </svg>
+        </button>
+      </template>
+    </PageHeader>
 
     <!-- 内容区域 -->
-    <main class="playlist-content" ref="contentRef" @scroll="handleScroll">
+    <main class="playlist-content">
       <!-- 歌单信息 -->
       <section class="playlist-info">
         <div class="info-cover">
@@ -65,7 +58,7 @@
           </svg>
           <span>{{ formatNumber(commentCount) }}</span>
         </button>
-        <button class="action-btn action-share">
+        <button class="action-btn action-share" @click="showRelatedPlaylists">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="18" cy="5" r="3" />
             <circle cx="6" cy="12" r="3" />
@@ -73,7 +66,7 @@
             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
           </svg>
-          <span>分享</span>
+          <span>推荐</span>
         </button>
         <button class="action-btn action-playall" @click="playAll">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -86,12 +79,12 @@
       <!-- 歌曲列表 -->
       <section class="playlist-songs">
         <div class="songs-header">
-          <span class="header-count">共 {{ songs.length }} 首</span>
+          <span class="header-count">共 {{ totalSongCount }} 首</span>
           <button class="header-multiple" @click="showMultipleSelect">
             多选
           </button>
         </div>
-        <div v-if="loading" class="songs-loading">
+        <div v-if="loading && songs.length === 0" class="songs-loading">
           <Loading :visible="true" />
         </div>
         <div v-else class="songs-list">
@@ -100,6 +93,31 @@
             :is-playing="playerStore.isPlaying && playerStore.currentSong?.id === song.id"
             :is-selected="isMultipleSelect && selectedSongs.has(song.id)" :show-checkbox="isMultipleSelect"
             @click="handleSongClick(song, index)" @more="showSongActions" @select="toggleSongSelection" />
+        </div>
+        
+        <!-- 手动加载更多按钮 -->
+        <div v-if="showLoadMore && !loadingMore" class="load-more-section">
+          <button class="load-more-btn" @click="loadMoreSongs()">
+            加载更多
+          </button>
+        </div>
+        
+        <!-- 加载中提示 -->
+        <div v-if="loadingMore" class="loading-more">
+          <Loading :visible="true" />
+        </div>
+      </section>
+
+      <!-- 相关歌单推荐 -->
+      <section v-if="showRelatedSection" class="related-playlists">
+        <div class="related-header">
+          <h4 class="rheader-title">相关歌单推荐</h4>
+        </div>
+        <div v-if="loadingRelated" class="related-loading">
+          <Loading :visible="true" />
+        </div>
+        <div v-else class="related-list">
+          <PlaylistCard v-for="item in relatedPlaylists" :key="item.id" :playlist="item" />
         </div>
       </section>
 
@@ -117,17 +135,6 @@
         </div>
       </div>
 
-      <!-- 评论入口 -->
-      <div v-if="!isMultipleSelect && songs.length > 0" class="comment-entry">
-        <button class="comment-btn" @click="showComments = true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <span>评论 ({{ commentCount }})</span>
-        </button>
-      </div>
-
       <!-- 底部间距 -->
       <div class="bottom-spacer" />
     </main>
@@ -142,12 +149,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, shallowRef, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useUserStore } from '@/stores/user'
 import * as api from '@/api'
-import type { IPlaylist as PlaylistType, ISong } from '@/api/types'
+import type { IPlaylist as PlaylistType, ISong, IPlaylist2 } from '@/api/types'
 import { getImageUrl, formatNumber } from '@/utils/lyric'
 
 import SongListItem from '@/components/SongListItem.vue'
@@ -156,6 +163,8 @@ import Comment from '@/components/Comment.vue'
 import { showAction } from '@/stores/action'
 import { showText } from '@/stores/text'
 import { svg } from '@/utils/svg'
+import PlaylistCard from '@/components/PlaylistCard.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -163,9 +172,10 @@ const playerStore = usePlayerStore()
 const userStore = useUserStore()
 
 const playlistId = computed(() => Number(route.params.id))
+const relatedPlaylists = shallowRef<IPlaylist2[]>([])
 
 // 数据
-const playlist = ref<Partial<PlaylistType>>({
+const playlist = shallowRef<Partial<PlaylistType>>({
   id: 0,
   name: '',
   coverImgUrl: '',
@@ -173,17 +183,25 @@ const playlist = ref<Partial<PlaylistType>>({
   trackCount: 0,
 })
 const songs = ref<ISong[]>([])
+const allSongIds = ref<number[]>([])
 const loading = ref(false)
-const headerScrolled = ref(false)
 const isSubscribed = ref(false)
 const subscribeCount = ref(0)
 const commentCount = ref(0)
 
+// 按需加载相关
+const loadingMore = ref(false)
+const currentLoadedCount = ref(0)
+const showLoadMore = ref(false)
+const isManualLoadMore = ref(false)
+const showRelatedSection = ref(false)
+const loadingRelated = ref(false)
+
+const BATCH_SIZE = 30
+
 // 多选相关状态
 const isMultipleSelect = ref(false)
 const selectedSongs = ref<Set<number>>(new Set())
-
-const contentRef = ref<HTMLElement>()
 
 // 评论相关状态
 const showComments = ref(false)
@@ -191,6 +209,10 @@ const showComments = ref(false)
 // 计算属性
 const isCreator = computed(() => {
   return playlist.value.creator?.userId === userStore.userId
+})
+
+const totalSongCount = computed(() => {
+  return playlist.value.trackCount || allSongIds.value.length || songs.value.length
 })
 
 // 获取歌单详情
@@ -203,9 +225,12 @@ const fetchPlaylistDetail = async () => {
     subscribeCount.value = res.playlist.subscribedCount || 0
     commentCount.value = res.playlist.commentCount || 0
 
-    // 获取歌曲详情
+    // 保存所有歌曲ID，用于按需加载
     if (res.playlist.trackIds && res.playlist.trackIds.length > 0) {
-      await fetchSongs(res.playlist.trackIds.map((t: any) => t.id))
+      allSongIds.value = res.playlist.trackIds.map((t: any) => t.id)
+      
+      // 初始加载第一批歌曲
+      await loadMoreSongs(true)
     }
   } catch (error) {
     console.error('获取歌单详情失败:', error)
@@ -218,31 +243,96 @@ const showDetailed = () => {
   showText(playlist.value.description || '', playlist.value.name);
 }
 
-// 获取歌曲详情
-const fetchSongs = async (ids: number[]) => {
+// 按需加载更多歌曲
+const loadMoreSongs = async (isInitial = false) => {
+  if (loadingMore.value) return
+  
+  const startIndex = isInitial ? 0 : currentLoadedCount.value
+  const endIndex = Math.min(startIndex + BATCH_SIZE, allSongIds.value.length)
+  
+  if (startIndex >= allSongIds.value.length) {
+    showLoadMore.value = false
+    return
+  }
+  
+  const idsToLoad = allSongIds.value.slice(startIndex, endIndex)
+  
+  if (isInitial) {
+    loading.value = true
+  } else {
+    loadingMore.value = true
+  }
+  
   try {
-    // 分批获取，每次最多1000首
-    const batchSize = 1000
-    const allSongs: ISong[] = []
-
-    for (let i = 0; i < ids.length; i += batchSize) {
-      const batch = ids.slice(i, i + batchSize)
-      const res = await api.getSongDetail(batch)
-      if (res.code === 200 && res.songs) {
-        allSongs.push(...res.songs.map((song: any) => ({
-          ...song,
-          artists: song.ar,
-          album: song.al,
-          duration: song.dt,
-          picUrl: song.al?.picUrl,
-          privilege: res.privileges?.find((p: any) => p.id === song.id),
-        })))
-      }
+    const newSongs = await fetchSongsBatch(idsToLoad)
+    songs.value = [...songs.value, ...newSongs]
+    currentLoadedCount.value = endIndex
+    
+    // 判断是否还有更多歌曲需要加载
+    if (endIndex < allSongIds.value.length) {
+      showLoadMore.value = true
+    } else {
+      showLoadMore.value = false
     }
+  } catch (error) {
+    console.error('加载歌曲详情失败:', error)
+  } finally {
+    loading.value = false
+    loadingMore.value = false
+  }
+}
 
-    songs.value = allSongs
+// 批量获取歌曲详情
+const fetchSongsBatch = async (ids: number[]): Promise<ISong[]> => {
+  if (ids.length === 0) return []
+  
+  try {
+    const res = await api.getSongDetail(ids)
+    if (res.code === 200 && res.songs) {
+      return res.songs.map((song: any) => ({
+        ...song,
+        artists: song.ar,
+        album: song.al,
+        duration: song.dt,
+        picUrl: song.al?.picUrl,
+        privilege: res.privileges?.find((p: any) => p.id === song.id),
+      }))
+    }
+    return []
   } catch (error) {
     console.error('获取歌曲详情失败:', error)
+    return []
+  }
+}
+
+const showRelatedPlaylists = () => {
+  showRelatedSection.value = true
+  isManualLoadMore.value = true
+  showLoadMore.value = true
+  
+  setTimeout(() => {
+    const relatedSection = document.querySelector('.related-playlists')
+    if (relatedSection) {
+      relatedSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, 100)
+  
+  if (relatedPlaylists.value.length === 0) {
+    fetchRecommend()
+  }
+}
+
+const fetchRecommend = async () => {
+  loadingRelated.value = true
+  try {
+    const res = await api.getRelatedPlaylists(playlistId.value)
+    if (res.code === 200) {
+      relatedPlaylists.value = res.data.recPlaylist.map((e: any) => e.playlist);
+    }
+  } catch (error) {
+    console.error('获取相关歌单失败:', error)
+  } finally {
+    loadingRelated.value = false
   }
 }
 
@@ -300,7 +390,6 @@ const showMoreActions = () => {
       label: '分享歌单',
       icon: svg.share,
       callback: () => {
-        // 实现分享功能
         showText('分享功能待实现')
       }
     }
@@ -316,7 +405,6 @@ const showSongActions = (song: ISong) => {
       label: '播放',
       icon: svg.play,
       callback: () => {
-        // 播放当前歌曲
         playerStore.playPlaylist([song], 0)
       }
     },
@@ -324,7 +412,6 @@ const showSongActions = (song: ISong) => {
       label: '添加到播放列表',
       icon: svg.add,
       callback: () => {
-        // 添加到播放列表
         playerStore.addToPlaylist(song)
       }
     },
@@ -332,7 +419,6 @@ const showSongActions = (song: ISong) => {
       label: '收藏',
       icon: svg.love,
       callback: () => {
-        // 收藏歌曲
         userStore.toggleLike(song.id)
       }
     },
@@ -340,7 +426,6 @@ const showSongActions = (song: ISong) => {
       label: '下载',
       icon: svg.download,
       callback: () => {
-        // 下载歌曲
         const id = song.privilege?.id
         if (id) {
           api.getSongUrl(id, 320000).then(u => u.data?.sort((a, b) => b.br - a.br)[0])
@@ -353,7 +438,6 @@ const showSongActions = (song: ISong) => {
       icon: svg.delete,
       destructive: true,
       callback: () => {
-        // 删除歌曲（如果是自己的歌单）
         if (!isCreator.value) {
           showText('只有歌单创建者才能删除歌曲')
           return
@@ -372,10 +456,8 @@ const showSongActions = (song: ISong) => {
 
 // 显示多选
 const showMultipleSelect = () => {
-  // 实现多选功能
   isMultipleSelect.value = !isMultipleSelect.value
   if (!isMultipleSelect.value) {
-    // 退出多选模式时清空选择
     selectedSongs.value.clear()
   }
   console.log('多选模式:', isMultipleSelect.value ? '开启' : '关闭')
@@ -384,10 +466,8 @@ const showMultipleSelect = () => {
 // 处理歌曲点击
 const handleSongClick = (song: ISong, index: number) => {
   if (isMultipleSelect.value) {
-    // 多选模式下，切换选择状态
     toggleSongSelection(song.id)
   } else {
-    // 普通模式下，播放歌曲
     playSong(song, index)
   }
 }
@@ -407,10 +487,8 @@ const toggleSongSelection = (songId: number) => {
 // 全选/取消全选
 const toggleSelectAll = () => {
   if (selectedSongs.value.size === songs.value.length) {
-    // 当前是全选状态，取消全选
     selectedSongs.value.clear()
   } else {
-    // 全选
     songs.value.forEach(song => selectedSongs.value.add(song.id))
   }
   console.log('已选择歌曲数量:', selectedSongs.value.size)
@@ -433,7 +511,6 @@ const showBatchActions = () => {
       label: '播放选中',
       icon: svg.play,
       callback: () => {
-        // 播放选中的歌曲
         const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
         playerStore.playPlaylist(selectedSongsList, 0)
         stopBatchAction()
@@ -443,7 +520,6 @@ const showBatchActions = () => {
       label: '添加到播放列表',
       icon: svg.add,
       callback: () => {
-        // 添加到播放列表
         const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
         selectedSongsList.forEach(song => playerStore.addToPlaylist(song))
         stopBatchAction()
@@ -453,7 +529,6 @@ const showBatchActions = () => {
       label: '收藏选中',
       icon: svg.love,
       callback: () => {
-        // 收藏选中的歌曲
         const selectedSongsList = songs.value.filter(song => selectedSongs.value.has(song.id))
         selectedSongsList.forEach(song => userStore.toggleLike(song.id))
         stopBatchAction()
@@ -464,7 +539,6 @@ const showBatchActions = () => {
       icon: svg.delete,
       destructive: true,
       callback: () => {
-        // 删除选中的歌曲（如果是自己的歌单）
         if (!isCreator.value) {
           showText('只能删除自己创建的歌单中的歌曲')
           return
@@ -485,7 +559,6 @@ const deleteSongs = async (songIds: number[]) => {
   try {
     await api.manipulatePlaylistTracks('del', playlistId.value, songIds)
     
-    // 按索引从大到小排序，避免删除时索引变化
     const indicesToDelete = songIds
       .map(songId => songs.value.findIndex(song => song.id === songId))
       .filter(index => index !== -1)
@@ -503,18 +576,14 @@ const deleteSongs = async (songIds: number[]) => {
   }
 }
 
-// 处理滚动
-const handleScroll = () => {
-  if (contentRef.value) {
-    headerScrolled.value = contentRef.value.scrollTop > 200
-  }
-}
-
-// 返回
-const goBack = () => router.back()
-
 onMounted(() => {
   fetchPlaylistDetail()
+})
+
+onUnmounted(() => {
+  songs.value = []
+  allSongIds.value = []
+  currentLoadedCount.value = 0
 })
 </script>
 
@@ -522,31 +591,11 @@ onMounted(() => {
 @use '@/styles/variables.scss' as *;
 
 .playlist-page {
-  min-height: 100vh;
+  height: 100vh;
   padding-bottom: 7.5rem /* 120px */;
+  overflow-y: auto;
 }
 
-.playlist-header {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: $screen-width;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  z-index: $z-sticky;
-  transition: all $transition-normal $ease-default;
-
-  &.header-scrolled {
-    background: rgba($bg-primary, 0.95);
-    backdrop-filter: blur(1.25rem /* 20px */);
-  }
-}
-
-.header-back,
 .header-more {
   width: 2.25rem /* 36px */;
   height: 2.25rem /* 36px */;
@@ -556,24 +605,11 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(0.625rem /* 10px */);
   transition: all $transition-fast $ease-default;
+  flex-shrink: 0;
 
   svg {
     width: 1.25rem /* 20px */;
     height: 1.25rem /* 20px */;
-  }
-}
-
-.header-title {
-  font-size: $font-md;
-  font-weight: 500;
-  color: white;
-  opacity: 0;
-  transition: opacity $transition-normal $ease-default;
-  @include text-ellipsis;
-  max-width: 12.5rem /* 200px */;
-
-  &.title-visible {
-    opacity: 1;
   }
 }
 
@@ -706,29 +742,27 @@ onMounted(() => {
     background: $gradient-primary;
     color: white;
     border-radius: $radius-full;
+    font-size: $font-sm;
     flex-direction: row;
-
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    
     svg {
-      width: 1rem /* 16px */;
-      height: 1rem /* 16px */;
-    }
-
-    span {
-      font-size: $font-sm;
-      font-weight: 500;
+      width: 1.125rem /* 18px */;
+      height: 1.125rem /* 18px */;
     }
   }
 }
 
 .playlist-songs {
-  padding: $spacing-md $spacing-lg;
+  padding-bottom: $spacing-lg;
 }
 
 .songs-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
 }
 
 .header-count {
@@ -737,25 +771,62 @@ onMounted(() => {
 }
 
 .header-multiple {
-  font-size: $font-sm;
-  color: $primary-color;
-}
-
-.songs-loading {
-  padding: $spacing-xl 0;
+  padding: $spacing-xs $spacing-md;
+  font-size: $font-xs;
+  color: $text-secondary;
+  background: $bg-secondary;
+  border-radius: $radius-full;
 }
 
 .songs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem /* 2px */;
+  padding: 0 $spacing-lg;
 }
 
-.bottom-spacer {
-  height: 5rem /* 80px */;
+.load-more-section {
+  padding: $spacing-lg;
+  text-align: center;
 }
 
-// 多选工具栏样式
+.load-more-btn {
+  padding: $spacing-sm $spacing-xl;
+  background: $bg-secondary;
+  color: $text-primary;
+  border-radius: $radius-full;
+  font-size: $font-sm;
+  @include tap-effect;
+}
+
+.loading-more {
+  padding: $spacing-lg;
+  text-align: center;
+}
+
+.related-playlists {
+  padding: $spacing-lg;
+  border-top: 0.125rem /* 1px */ solid $border-color;
+}
+
+.related-header {
+  margin-bottom: $spacing-md;
+}
+
+.rheader-title {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.related-loading {
+  padding: $spacing-xl;
+  text-align: center;
+}
+
+.related-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
 .multiple-select-toolbar {
   position: fixed;
   bottom: 0;
@@ -763,15 +834,13 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 100%;
   max-width: $screen-width;
-  height: 3.75rem /* 60px */;
-  background: rgba($bg-card, 0.95);
-  backdrop-filter: blur(1.25rem /* 20px */);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 $spacing-lg;
-  z-index: $z-player - 1;
-  border-top: 0.125rem /* 1px */ solid $border-light;
+  padding: $spacing-md $spacing-lg;
+  background: $bg-secondary;
+  border-top: 0.125rem /* 1px */ solid $border-color;
+  z-index: $z-modal;
 }
 
 .toolbar-left,
@@ -782,54 +851,19 @@ onMounted(() => {
 }
 
 .toolbar-btn {
-  padding: $spacing-xs $spacing-lg;
+  padding: $spacing-xs $spacing-md;
   font-size: $font-sm;
-  color: $primary-color;
-  background: transparent;
-  border: 0.125rem /* 1px */ solid $primary-color;
-  border-radius: $radius-full;
-  cursor: pointer;
-  transition: all $transition-fast $ease-default;
-
-  &:active {
-    background: rgba($primary-color, 0.1);
-  }
+  color: $text-primary;
+  background: $bg-card;
+  border-radius: $radius-md;
 }
 
 .toolbar-info {
   font-size: $font-sm;
-  color: $text-secondary;
+  color: $text-tertiary;
 }
 
-// 评论入口样式
-.comment-entry {
-  margin: $spacing-lg 0;
-  padding: 0 $spacing-lg;
-}
-
-.comment-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-xs;
-  padding: $spacing-md;
-  background: $bg-card;
-  border: 0.125rem /* 1px */ solid $border-light;
-  border-radius: $radius-md;
-  color: $text-primary;
-  font-size: $font-sm;
-  cursor: pointer;
-  transition: all $transition-fast $ease-default;
-
-  svg {
-    width: 1.125rem /* 18px */;
-    height: 1.125rem /* 18px */;
-  }
-
-  &:active {
-    background: $bg-hover;
-    transform: scale(0.98);
-  }
+.bottom-spacer {
+  height: 6.25rem /* 100px */;
 }
 </style>
