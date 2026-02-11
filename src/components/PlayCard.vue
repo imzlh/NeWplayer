@@ -236,7 +236,7 @@
 
     <!-- 播放列表弹窗 -->
     <Transition name="slide-up">
-      <div v-if="showPlaylistModal" class="playlist-modal" @click="showPlaylistModal = false">
+      <div v-show="showPlaylistModal" class="playlist-modal" @click="showPlaylistModal = false" ref="playListRef">
         <div class="playlist-panel" @click.stop @touchmove.stop @touchstart.stop>
           <div class="panel-header">
             <h3>播放列表 ({{ playerStore.playlist.length }})</h3>
@@ -341,6 +341,7 @@ const isSwiping = ref(false)
 
 // 主容器引用
 const mainContainer = ref<HTMLElement>()
+const playListRef = ref<HTMLElement>()
 
 // 容器最大尺寸
 const containerMax = ref(320)
@@ -349,7 +350,7 @@ const containerMax = ref(320)
 const handleResize = () => {
   if (mainContainer.value) {
     const size = mainContainer.value.getBoundingClientRect()
-    containerMax.value = Math.min(size.width, size.height)
+    containerMax.value = Math.min(size.width, size.height, window.innerWidth * .9)
   }
 }
 
@@ -451,6 +452,12 @@ const handleProgressTouchEnd = () => {
 // 显示播放列表
 const showPlaylist = () => {
   showPlaylistModal.value = true
+  if (!playListRef.value) return;
+  const active = playListRef.value.getElementsByClassName('item-active')[0];
+  active?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
 }
 
 // 播放指定索引
@@ -1085,7 +1092,7 @@ onMounted(() => {
   overflow: hidden;
 
   &.item-active {
-    background: rgba($primary-color, 0.1);
+    background: rgba($primary-color, 0.25);
   }
 
   &:hover {

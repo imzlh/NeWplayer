@@ -7,7 +7,7 @@
   >
     <!-- 歌曲封面 -->
     <div class="player-cover">
-      <img v-if="playerStore.currentSong?.picUrl"
+      <img v-if="playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl"
         :src="getImageUrl(playerStore.currentSong?.picUrl || playerStore.currentSong?.album?.picUrl, 60, 60)"
         :alt="playerStore.currentSong?.name"
         class="cover-image"

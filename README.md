@@ -1,28 +1,26 @@
 # 网易云音乐小屏幕播放器
 
-一个专为 402x512 小屏幕设备（智能手表/小屏设备）优化的网易云音乐播放器，基于 Vue 3 + TypeScript + Vite 构建。
+一个专为小屏幕设备（手表/手机）优化的网易云音乐播放器，基于 Vue 3 + TypeScript + Vite 构建。
 
 ## 特性
 
-- **小屏幕优化**: 专为 402x512 分辨率设计，完美适配智能手表等小屏设备
+- **小屏幕优化**: 专为 402x512 分辨率优化，支持自定义缩放，完美适配智能手表等小屏设备
 - **完整的播放功能**: 播放/暂停、上一首/下一首、进度拖动、音量控制
-- **智能跳过**: 自动检测并跳过无版权或需要VIP的歌曲
 - **多种登录方式**: 支持手机号登录和二维码登录
-- **手势操作**: 支持左右滑动切歌、点击切换歌词
-- **精美动画**: 唱片旋转、歌词滚动、页面过渡动画
-- **歌词显示**: 支持原歌词和翻译歌词
-- **播放模式**: 顺序播放、随机播放、单曲循环
+- **触屏优化**: 支持左右滑动切歌和切换歌词、仿iOS底部操作栏等
+- **精美动画**: 歌词滚动、页面过渡动画、下滑显示标题...完美的性能与美观的权衡
+- **精心优化**: 专门照顾小屏幕，当然要照顾到方方面面：点击显示全文、下滑显示更多...
 
 ## 技术栈
 
-- **框架**: Vue 3.5+ (Composition API + `<script setup>`)
+- **框架**: Vue 3.5+
 - **语言**: TypeScript 5.9+
 - **构建工具**: Vite 6.x
 - **状态管理**: Pinia 2.x
 - **路由**: Vue Router 4.x
 - **HTTP客户端**: Axios
 - **样式**: SCSS
-- **后端API**: [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
+- **后端API**: NeteaseCloudMusicApiEnhanced
 
 ## 功能模块
 
@@ -36,6 +34,7 @@
 - [x] 播放器 - 唱片动画、歌词显示、进度控制、播放模式
 - [x] 登录 - 手机号登录、二维码登录
 - [x] 用户 - 用户信息、我的歌单、每日推荐、播放历史
+- [x] 他人 - 状态、歌单、信息、关注者
 - [x] 播放列表管理 - 添加/删除/清空
 - [x] 私人FM - 生成/播放/暂停/调整音量
 - [x] 评论 - 查看/发布评论
@@ -48,9 +47,11 @@
 - [x] 进度拖动
 - [x] 音量控制
 - [x] 播放模式切换（顺序/随机/循环）
-- [x] 自动跳过无版权歌曲
 - [x] 歌词同步显示
 - [x] 播放历史记录
+- [x] 切换音质
+- [x] 下载
+- ...
 
 ## 安装和运行
 
@@ -71,10 +72,10 @@ npm start
 
 ```bash
 # 克隆本项目
-git clone <repository-url>
-cd netease-music-player
+git clone https://github.com/imzlh/NeWplayer
+cd NeWplayer
 
-# 安装依赖
+# 安装依赖，推荐pnpm
 npm install
 
 # 启动开发服务器
@@ -132,14 +133,23 @@ server: {
 },
 ```
 
-### 屏幕适配
+### 应用配置
+同样支持环境变量更改KV、API服务器。除了设置环境变量，可以使用内置的 `/op/env` 路由覆盖
 
-项目针对 402x512 分辨率进行了优化，主要样式变量在 `src/styles/variables.scss` 中定义:
+| 环境变量 | op query | 说明 |
+|:---|:---:|---:|
+| `NEWP_API_BASE_URL` | `api_url` | API端点，默认`/@neast` |
+| `NEWP_DISABLE_KV` | `disable_kv` | 是否禁用KV |
+| `NEWP_KV_API_URL` | `kv_url` | KV API的地址 |
+| `NEWP_COOKIE_API_URL` | `cookie_url` | Cookie API的地址 |
 
-```scss
-$screen-width: 402px;
-$screen-height: 512px;
-```
+**说明**：
+
+ - 如果是个人使用，我们建议部署 `src/example/` 的2个PHP文件。默认地址是`/cgi-bin/{name}`，我们建议将PHP单独放在文件夹内，如`/cgi-bin/cookie/index.php`。<br>
+  好处是多端同步，再也不用担心设备太多啦
+  如果是公网且开放，强烈建议关闭
+ - 强烈建议自行部署API端点。一行就行！<br>
+  `npx NeteaseCloudMusicApi@latest`
 
 ## 浏览器支持
 
