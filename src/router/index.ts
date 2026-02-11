@@ -149,7 +149,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/op/:action',
     name: 'InternalOperation',
-    redirect(to, from) {
+    redirect(to) {
       // receive op
       routeOpHandler(to.query, to.params.action as string);
       return '/';
