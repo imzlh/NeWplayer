@@ -2,6 +2,10 @@
 
 一个专为小屏幕设备（手表/手机）优化的网易云音乐播放器，基于 Vue 3 + TypeScript + Vite 构建。
 
+[![预览](docs/home.png)](https://np.imzlh.top)
+
+<a style="padding: 13px 40px;background-color: #77e69f;border: none;outline: none;color: #e2e8ff;border-radius: 10px;font-size: 16px;" href="https://np.imzlh.top">在线体验</a>
+
 ## 特性
 
 - **小屏幕优化**: 专为 402x512 分辨率优化，支持自定义缩放，完美适配智能手表等小屏设备
