@@ -415,7 +415,7 @@ const scrollToCurrentLyric = () => {
 
 
 // 监听歌词变化
-watch(() => playerStore.currentLyricIndex, (newIndex) => {
+watch(() => playerStore.currentLyricIndex, () => {
   if (showLyrics.value) {
     scrollToCurrentLyric()
   }

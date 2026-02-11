@@ -2,11 +2,13 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/api/types'
 
 // @ts-ignore
-const BASE_URL = import.meta.env.VITE_NEWP_API_BASE_URL || '/@neast';
+const BASE_URL = import.meta.env.NEWP_API_BASE_URL || '/@neast';
 // @ts-ignore
-const KV_URL = import.meta.env.VITE_NEWP_KV_API_URL || '/cgi-bin/kv';
+const KV_URL = import.meta.env.NEWP_KV_API_URL || '/cgi-bin/kv';
 // @ts-ignore
-const COOKIE_URL = import.meta.env.VITE_NEWP_COOKIE_API_URL || '/cgi-bin/cookie';
+const COOKIE_URL = import.meta.env.NEWP_COOKIE_API_URL || '/cgi-bin/cookie';
+// @ts-ignore
+const KV_ENABLED = !!import.meta.env.NEWP_DISABLE_KV;
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
@@ -80,6 +82,8 @@ export namespace KV {
     body?: string,
     query?: Record<string, string>
   ): Promise<Response> {
+    if (!KV_ENABLED) throw new Error("KV remote store disabled", 404);
+
     const params = new URLSearchParams();
     if (key) params.set('key', key);
     if (query) Object.entries(query).forEach(([k, v]) => params.set(k, v));
@@ -126,6 +130,7 @@ export namespace KV {
   }
 
   export function putUnload(key: string, value: string): boolean {
+    if (!KV_ENABLED) return false;
     const url = buildURL(key);
     const blob = new Blob([value], { type: 'text/plain' });
 
@@ -174,24 +179,22 @@ export namespace KV {
 
   /** LIST ?list=1&prefix=xxx - 返回 key 数组 */
   export async function list(prefix = ''): Promise<string[]> {
-    const res = await fetch(
-      `${KV_URL}?list=1${prefix ? `&prefix=${encodeURIComponent(prefix)}` : ''}`,
-      { signal: AbortSignal.timeout(TIMEOUT) }
+    const res = await req(
+      'GET',
+      undefined,
+      undefined,
+      { list: '1', prefix }
     );
-    if (!res.ok) throw new Error(await res.text(), res.status);
-
     const text = await res.text();
     return text.trim() ? text.trim().split('\n') : [];
   }
 
   /** FIND ?find=query - 返回 {k,v} 数组 */
   export async function find(query: string): Promise<{ key: string, value: string }[]> {
-    const res = await fetch(
-      `${KV_URL}?find=${encodeURIComponent(query)}`,
-      { signal: AbortSignal.timeout(TIMEOUT) }
+    const res = await req(
+      'GET', undefined, undefined,
+      { find: query }
     );
-    if (!res.ok) throw new Error(await res.text(), res.status);
-
     const items: { key: string, value: string }[] = [];
     const text = await res.text();
     if (!text.trim()) return items;
